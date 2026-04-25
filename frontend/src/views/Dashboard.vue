@@ -2,7 +2,17 @@
   <section>
     <div class="page-head">
       <h1>首页仪表盘</h1>
-      <el-button type="primary" @click="load">刷新</el-button>
+      <div class="toolbar">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          value-format="YYYY-MM-DD"
+        />
+        <el-button type="primary" @click="load">刷新</el-button>
+      </div>
     </div>
 
     <div class="stats-grid">
@@ -36,6 +46,7 @@ import { getRuleCard } from '../api/weeklyReview'
 
 const summary = reactive({})
 const ruleCard = ref(null)
+const dateRange = ref([])
 
 const weekRange = () => {
   const now = new Date()
@@ -43,7 +54,7 @@ const weekRange = () => {
   const start = new Date(now)
   start.setDate(now.getDate() - day + 1)
   const end = new Date(start)
-  end.setDate(start.getDate() + 4)
+  end.setDate(start.getDate() + 6)
   return {
     start: start.toISOString().slice(0, 10),
     end: end.toISOString().slice(0, 10)
@@ -51,8 +62,11 @@ const weekRange = () => {
 }
 
 const load = async () => {
+  const range = dateRange.value?.length === 2
+    ? { start: dateRange.value[0], end: dateRange.value[1] }
+    : weekRange()
   const [statsRes, ruleRes] = await Promise.all([
-    getWeekStatistics(weekRange()),
+    getWeekStatistics(range),
     getRuleCard().catch(() => ({ data: null }))
   ])
   Object.assign(summary, statsRes.data)
@@ -64,5 +78,9 @@ const formatPercent = (value) => {
   return `${(Number(value) * 100).toFixed(1)}%`
 }
 
-onMounted(load)
+onMounted(() => {
+  const range = weekRange()
+  dateRange.value = [range.start, range.end]
+  load()
+})
 </script>

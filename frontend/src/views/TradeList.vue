@@ -3,16 +3,39 @@
     <div class="page-head">
       <h1>交易记录</h1>
       <div class="toolbar">
-        <el-button @click="exportCsv">导出 CSV</el-button>
+        <el-button @click="exportCsv(trades, '筛选交易记录')">导出筛选结果</el-button>
+        <el-button :disabled="!selectedTrades.length" @click="exportCsv(selectedTrades, '选中交易记录')">
+          导出选中
+        </el-button>
         <el-button type="primary" @click="$router.push('/trades/create')">新增交易</el-button>
       </div>
+    </div>
+
+    <div class="filter-panel">
+      <el-date-picker
+        v-model="filters.dateRange"
+        type="daterange"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期"
+        value-format="YYYY-MM-DD"
+      />
+      <el-input v-model="filters.stockName" clearable placeholder="股票名称" />
+      <el-select v-model="filters.isPatternTrade" clearable placeholder="模式内/外">
+        <el-option label="模式内" :value="1" />
+        <el-option label="模式外" :value="0" />
+      </el-select>
+      <el-button type="primary" @click="load">筛选</el-button>
+      <el-button @click="resetFilters">重置</el-button>
     </div>
 
     <el-table
       :data="trades"
       stripe
+      @selection-change="selectedTrades = $event"
       style="width: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);"
     >
+      <el-table-column type="selection" width="48" />
       <el-table-column prop="tradeDate" label="日期" width="120" />
       <el-table-column prop="stockCode" label="代码" width="110" />
       <el-table-column prop="stockName" label="股票" min-width="120" />
@@ -47,21 +70,40 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { deleteTrade, listTradeMistakes, listTrades } from '../api/trade'
 import { listMistakeTags } from '../api/mistakeTag'
 
 const trades = ref([])
+const selectedTrades = ref([])
 const mistakeTagMap = ref({})
+const filters = reactive({
+  dateRange: [],
+  stockName: '',
+  isPatternTrade: null
+})
 
 const load = async () => {
-  const res = await listTrades()
+  const params = {
+    startDate: filters.dateRange?.[0],
+    endDate: filters.dateRange?.[1],
+    stockName: filters.stockName || undefined,
+    isPatternTrade: filters.isPatternTrade
+  }
+  const res = await listTrades(params)
   const rows = res.data
   const mistakeResults = await Promise.all(rows.map((row) => listTradeMistakes(row.id).catch(() => ({ data: [] }))))
   trades.value = rows.map((row, index) => ({
     ...row,
     mistakeTagNames: mistakeResults[index].data.map((id) => mistakeTagMap.value[id]).filter(Boolean)
   }))
+}
+
+const resetFilters = async () => {
+  filters.dateRange = []
+  filters.stockName = ''
+  filters.isPatternTrade = null
+  await load()
 }
 
 const remove = async (id) => {
@@ -94,8 +136,8 @@ const escapeCsv = (value) => {
   return `"${text.replaceAll('"', '""')}"`
 }
 
-const exportCsv = () => {
-  const rows = trades.value.map((trade) => ({
+const exportCsv = (sourceRows, title) => {
+  const rows = sourceRows.map((trade) => ({
     ...trade,
     isPatternTradeText: trade.isPatternTrade === 1 ? '是' : '否',
     mistakeTagsText: (trade.mistakeTagNames || []).join('；')
@@ -108,7 +150,7 @@ const exportCsv = () => {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `交易记录-${new Date().toISOString().slice(0, 10)}.csv`
+  link.download = `${title}-${new Date().toISOString().slice(0, 10)}.csv`
   link.click()
   URL.revokeObjectURL(url)
 }

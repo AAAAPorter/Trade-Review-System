@@ -5,7 +5,7 @@
       <el-button type="primary" @click="$router.push('/trades/create')">新增交易</el-button>
     </div>
 
-    <el-table :data="trades" border>
+    <el-table :data="trades" stripe style="width: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);">
       <el-table-column prop="tradeDate" label="日期" width="120" />
       <el-table-column prop="stockName" label="股票" />
       <el-table-column prop="buyPrice" label="买入价" width="110" />
@@ -16,15 +16,6 @@
           <el-tag :type="row.isPatternTrade === 1 ? 'success' : 'danger'">
             {{ row.isPatternTrade === 1 ? '是' : '否' }}
           </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="错误标签" min-width="220">
-        <template #default="{ row }">
-          <div class="tag-list">
-            <el-tag v-for="tag in row.mistakeTagNames || []" :key="tag" type="warning">
-              {{ tag }}
-            </el-tag>
-          </div>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="220">
@@ -40,20 +31,13 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { deleteTrade, listTradeMistakes, listTrades } from '../api/trade'
-import { listMistakeTags } from '../api/mistakeTag'
+import { deleteTrade, listTrades } from '../api/trade'
 
 const trades = ref([])
-const mistakeTagMap = ref({})
 
 const load = async () => {
   const res = await listTrades()
-  const rows = res.data
-  const mistakeResults = await Promise.all(rows.map((row) => listTradeMistakes(row.id).catch(() => ({ data: [] }))))
-  trades.value = rows.map((row, index) => ({
-    ...row,
-    mistakeTagNames: mistakeResults[index].data.map((id) => mistakeTagMap.value[id]).filter(Boolean)
-  }))
+  trades.value = res.data
 }
 
 const remove = async (id) => {
@@ -61,9 +45,5 @@ const remove = async (id) => {
   await load()
 }
 
-onMounted(async () => {
-  const tagsRes = await listMistakeTags()
-  mistakeTagMap.value = Object.fromEntries(tagsRes.data.map((tag) => [tag.id, tag.name]))
-  await load()
-})
+onMounted(load)
 </script>

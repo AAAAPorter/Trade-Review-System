@@ -4,6 +4,8 @@ CREATE DATABASE IF NOT EXISTS trade_review_system
 
 USE trade_review_system;
 
+SET NAMES utf8mb4;
+
 CREATE TABLE IF NOT EXISTS trade_record (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     stock_code VARCHAR(20) NOT NULL,

@@ -18,6 +18,15 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="错误标签" min-width="220">
+        <template #default="{ row }">
+          <div class="tag-list">
+            <el-tag v-for="tag in row.mistakeTagNames || []" :key="tag" type="warning">
+              {{ tag }}
+            </el-tag>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="220">
         <template #default="{ row }">
           <el-button size="small" @click="$router.push(`/trades/edit/${row.id}`)">编辑</el-button>
@@ -31,13 +40,20 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { deleteTrade, listTrades } from '../api/trade'
+import { deleteTrade, listTradeMistakes, listTrades } from '../api/trade'
+import { listMistakeTags } from '../api/mistakeTag'
 
 const trades = ref([])
+const mistakeTagMap = ref({})
 
 const load = async () => {
   const res = await listTrades()
-  trades.value = res.data
+  const rows = res.data
+  const mistakeResults = await Promise.all(rows.map((row) => listTradeMistakes(row.id).catch(() => ({ data: [] }))))
+  trades.value = rows.map((row, index) => ({
+    ...row,
+    mistakeTagNames: mistakeResults[index].data.map((id) => mistakeTagMap.value[id]).filter(Boolean)
+  }))
 }
 
 const remove = async (id) => {
@@ -45,5 +61,9 @@ const remove = async (id) => {
   await load()
 }
 
-onMounted(load)
+onMounted(async () => {
+  const tagsRes = await listMistakeTags()
+  mistakeTagMap.value = Object.fromEntries(tagsRes.data.map((tag) => [tag.id, tag.name]))
+  await load()
+})
 </script>

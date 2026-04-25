@@ -93,6 +93,12 @@ body {
   border-bottom: 1px solid #eef0f3;
 }
 
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .rule-list {
   margin: 0;
   padding-left: 22px;

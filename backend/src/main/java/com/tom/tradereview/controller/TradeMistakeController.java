@@ -6,6 +6,7 @@ import com.tom.tradereview.entity.TradeMistakeRel;
 import com.tom.tradereview.service.TradeMistakeRelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,14 @@ import java.util.List;
 @RequestMapping("/api/trades")
 public class TradeMistakeController {
     private final TradeMistakeRelService tradeMistakeRelService;
+
+    @GetMapping("/{id}/mistakes")
+    public List<Long> listMistakeIds(@PathVariable Long id) {
+        return tradeMistakeRelService.list(new LambdaQueryWrapper<TradeMistakeRel>().eq(TradeMistakeRel::getTradeId, id))
+                .stream()
+                .map(TradeMistakeRel::getMistakeTagId)
+                .toList();
+    }
 
     @PostMapping("/{id}/mistakes")
     public Boolean replaceMistakes(@PathVariable Long id, @RequestBody MistakeIdsDTO dto) {

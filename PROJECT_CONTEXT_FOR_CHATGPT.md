@@ -162,12 +162,15 @@ frontend/src
 
 ### 4.5 周复盘
 
-已实现基础功能：
+已实现：
 
 - 新增周复盘
 - 查询周复盘列表
 - 查询周复盘详情
 - 修改周复盘
+- 选择日期范围后调用 `/api/statistics/week` 生成统计快照
+- 保存周复盘时同时保存统计快照和用户手写总结
+- 查看或编辑历史周复盘时回显统计快照
 - 保存下周三条纪律
 - 保存训练主题和训练方式
 
@@ -271,6 +274,7 @@ profitRate
 patternTradeCount
 nonPatternTradeCount
 topMistakes
+topMistakeSummary
 biggestWinTrade
 biggestLossTrade
 ```
@@ -297,6 +301,20 @@ mistake_tag           错误标签
 trade_mistake_rel     交易和错误标签关联
 trade_review          单笔交易复盘
 weekly_review         周复盘
+```
+
+`weekly_review` 已保存周复盘统计快照字段：
+
+```text
+trade_count
+win_count
+loss_count
+win_rate
+pattern_trade_count
+non_pattern_trade_count
+top_mistake_summary
+biggest_win_trade
+biggest_loss_trade
 ```
 
 交易记录核心字段：
@@ -399,7 +417,7 @@ password: ${MYSQL_ROOT_PASSWORD:}
 
 3. CSV 导出逻辑在 `frontend/src/views/TradeList.vue` 中，目前是浏览器端生成 CSV 文件。
 
-4. 周复盘页面目前还是基础表单，后续可以增强为“选择日期范围 -> 自动生成统计 -> 手动填写总结 -> 保存周复盘”的完整流程。
+4. 周复盘页面已支持“选择日期范围 -> 自动生成统计 -> 手动填写总结 -> 保存周复盘”的完整流程。
 
 5. 当前系统没有登录、多用户、权限控制，也没有图片上传和券商导入。
 
@@ -409,8 +427,8 @@ password: ${MYSQL_ROOT_PASSWORD:}
 
 ```text
 基于这个项目说明，请帮我设计下一阶段功能开发方案。
-目标是完善周复盘页面，让它支持选择日期范围后自动拉取统计数据，
-并把统计结果和用户手写总结一起保存到 weekly_review 表。
+目标是在现有周复盘闭环基础上继续增强复盘质量，
+例如增加月度复盘、错误标签趋势、纪律执行追踪或复盘导出。
 请给出后端接口设计、前端页面交互设计、需要修改的文件，以及关键代码。
 ```
 

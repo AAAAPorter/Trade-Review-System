@@ -1,7 +1,7 @@
 <template>
   <el-container class="app-shell">
     <el-aside width="220px" class="sidebar">
-      <div class="brand">个人交易复盘</div>
+      <div class="brand">个人交易复盘系统</div>
       <el-menu router :default-active="$route.path" class="nav">
         <el-menu-item index="/dashboard">首页仪表盘</el-menu-item>
         <el-menu-item index="/trades">交易记录</el-menu-item>

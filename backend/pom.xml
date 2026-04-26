@@ -15,7 +15,7 @@
     <artifactId>trade-review</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>trade-review</name>
-    <description>Weekly trade review system</description>
+    <description>Personal trade review system</description>
 
     <properties>
         <java.version>17</java.version>

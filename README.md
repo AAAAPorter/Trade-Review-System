@@ -1,6 +1,12 @@
 # 个人交易复盘系统
 
-个人短线交易复盘与行为纠错系统。
+个人短线交易复盘与行为纠错系统，覆盖交易记录、错误归因、单笔复盘、周统计、周复盘和纪律卡片。
+
+核心闭环：
+
+```text
+交易记录 -> 错误标签 -> 单笔复盘 -> 周统计 -> 周复盘 -> 下周纪律卡片
+```
 
 ## 技术栈
 
@@ -23,6 +29,12 @@ trade-review-system
 
 ```powershell
 mysql -u root -p < database\schema.sql
+```
+
+如果是已初始化过的数据库，阶段一新增的周复盘统计快照字段可执行：
+
+```powershell
+mysql -u root -p < database\phase1_weekly_review_snapshot.sql
 ```
 
 ## 后端启动

@@ -16,6 +16,7 @@ public class WeeklyStatisticsDTO {
     private Long patternTradeCount;
     private Long nonPatternTradeCount;
     private List<MistakeCountDTO> topMistakes;
+    private String topMistakeSummary;
     private String biggestWinTrade;
     private String biggestLossTrade;
 }

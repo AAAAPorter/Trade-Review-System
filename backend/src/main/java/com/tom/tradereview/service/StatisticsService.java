@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,7 +49,9 @@ public class StatisticsService {
         dto.setProfitRate(BigDecimal.ZERO);
         dto.setPatternTradeCount(patternTradeCount);
         dto.setNonPatternTradeCount(tradeCount - patternTradeCount);
-        dto.setTopMistakes(topMistakes(trades));
+        List<MistakeCountDTO> topMistakes = topMistakes(trades);
+        dto.setTopMistakes(topMistakes);
+        dto.setTopMistakeSummary(formatTopMistakes(topMistakes));
         dto.setBiggestWinTrade(bestTradeName(trades, true));
         dto.setBiggestLossTrade(bestTradeName(trades, false));
         return dto;
@@ -76,11 +79,23 @@ public class StatisticsService {
                 .toList();
     }
 
+    private String formatTopMistakes(List<MistakeCountDTO> topMistakes) {
+        if (topMistakes == null || topMistakes.isEmpty()) {
+            return null;
+        }
+        return topMistakes.stream()
+                .map(item -> item.getName() + "(" + item.getCount() + ")")
+                .collect(Collectors.joining(", "));
+    }
+
     private String bestTradeName(List<TradeRecord> trades, boolean biggestWin) {
         Comparator<TradeRecord> comparator = Comparator.comparing(
                 trade -> trade.getProfitAmount() == null ? BigDecimal.ZERO : trade.getProfitAmount()
         );
-        return (biggestWin ? trades.stream().max(comparator) : trades.stream().min(comparator))
+        Optional<TradeRecord> trade = biggestWin
+                ? trades.stream().filter(item -> positive(item.getProfitAmount())).max(comparator)
+                : trades.stream().filter(item -> negative(item.getProfitAmount())).min(comparator);
+        return trade
                 .map(TradeRecord::getStockName)
                 .orElse(null);
     }

@@ -163,6 +163,46 @@ body {
   border-bottom: none;
 }
 
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.detail-layout {
+  display: grid;
+  gap: 20px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.detail-item {
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.detail-item span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.detail-item strong {
+  font-size: 16px;
+  color: var(--text-main);
+}
+
+.empty-text {
+  color: var(--text-secondary);
+}
+
 .rule-list {
   margin: 0;
   padding-left: 24px;

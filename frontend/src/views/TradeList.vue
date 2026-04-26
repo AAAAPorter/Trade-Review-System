@@ -58,8 +58,9 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="220">
+      <el-table-column label="操作" width="270">
         <template #default="{ row }">
+          <el-button size="small" @click="$router.push(`/trades/${row.id}`)">查看</el-button>
           <el-button size="small" @click="$router.push(`/trades/edit/${row.id}`)">编辑</el-button>
           <el-button size="small" @click="$router.push(`/trades/${row.id}/review`)">复盘</el-button>
           <el-button size="small" type="danger" @click="remove(row.id)">删除</el-button>

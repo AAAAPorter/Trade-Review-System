@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
 import TradeList from '../views/TradeList.vue'
+import TradeDetail from '../views/TradeDetail.vue'
 import TradeForm from '../views/TradeForm.vue'
 import TradeReview from '../views/TradeReview.vue'
 import MistakeTagManage from '../views/MistakeTagManage.vue'
@@ -14,6 +15,7 @@ const routes = [
   { path: '/trades/create', component: TradeForm },
   { path: '/trades/edit/:id', component: TradeForm },
   { path: '/trades/:id/review', component: TradeReview },
+  { path: '/trades/:id', component: TradeDetail },
   { path: '/mistake-tags', component: MistakeTagManage },
   { path: '/weekly-review', component: WeeklyReview },
   { path: '/rule-card', component: RuleCard }

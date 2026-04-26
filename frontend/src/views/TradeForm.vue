@@ -10,6 +10,27 @@
         <el-col :span="8"><el-form-item label="股票代码"><el-input v-model="form.stockCode" /></el-form-item></el-col>
         <el-col :span="8"><el-form-item label="股票名称"><el-input v-model="form.stockName" /></el-form-item></el-col>
         <el-col :span="8"><el-form-item label="交易日期"><el-date-picker v-model="form.tradeDate" value-format="YYYY-MM-DD" /></el-form-item></el-col>
+        <el-col :span="8">
+          <el-form-item label="买入时间">
+            <el-date-picker
+              v-model="form.buyTime"
+              type="datetime"
+              format="YYYY-MM-DD HH:mm"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+              @change="syncTradeDate"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="卖出时间">
+            <el-date-picker
+              v-model="form.sellTime"
+              type="datetime"
+              format="YYYY-MM-DD HH:mm"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+            />
+          </el-form-item>
+        </el-col>
         <el-col :span="8"><el-form-item label="买入价格"><el-input-number v-model="form.buyPrice" :precision="3" /></el-form-item></el-col>
         <el-col :span="8"><el-form-item label="卖出价格"><el-input-number v-model="form.sellPrice" :precision="3" /></el-form-item></el-col>
         <el-col :span="8"><el-form-item label="止损位"><el-input-number v-model="form.stopLossPrice" :precision="3" /></el-form-item></el-col>
@@ -50,7 +71,14 @@ const isPattern = computed({
   set: (value) => { form.isPatternTrade = value ? 1 : 0 }
 })
 
+const syncTradeDate = () => {
+  if (!form.tradeDate && form.buyTime) {
+    form.tradeDate = form.buyTime.slice(0, 10)
+  }
+}
+
 const save = async () => {
+  syncTradeDate()
   let tradeId = route.params.id
   if (isEdit.value) {
     await updateTrade(route.params.id, form)

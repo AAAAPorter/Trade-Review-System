@@ -177,6 +177,26 @@ body {
   padding-left: 10px;
 }
 
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.panel-head .panel-title {
+  margin-bottom: 0;
+}
+
+.execution-panel {
+  overflow: hidden;
+}
+
+.form-extra {
+  margin-top: 20px;
+}
+
 .mistake-row {
   display: flex;
   justify-content: space-between;

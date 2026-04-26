@@ -27,6 +27,12 @@ public class TradeRecord {
     private BigDecimal profitRate;
     private Integer isPatternTrade;
     private LocalDate tradeDate;
+    private Integer totalBuyQuantity;
+    private Integer totalSellQuantity;
+    private Integer remainingQuantity;
+    private BigDecimal avgBuyPrice;
+    private BigDecimal avgSellPrice;
+    private String positionStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

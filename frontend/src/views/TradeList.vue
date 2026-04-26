@@ -36,12 +36,23 @@
       style="width: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);"
     >
       <el-table-column type="selection" width="48" />
-      <el-table-column prop="tradeDate" label="日期" width="120" />
+      <el-table-column prop="tradeDate" label="统计归属日期" width="130" />
       <el-table-column prop="stockCode" label="代码" width="110" />
       <el-table-column prop="stockName" label="股票" min-width="120" />
-      <el-table-column prop="buyPrice" label="买入价" width="110" />
-      <el-table-column prop="sellPrice" label="卖出价" width="110" />
+      <el-table-column label="平均买入价" width="120">
+        <template #default="{ row }">{{ row.avgBuyPrice ?? row.buyPrice ?? '-' }}</template>
+      </el-table-column>
+      <el-table-column label="平均卖出价" width="120">
+        <template #default="{ row }">{{ row.avgSellPrice ?? row.sellPrice ?? '-' }}</template>
+      </el-table-column>
+      <el-table-column prop="totalBuyQuantity" label="累计买入" width="110" />
+      <el-table-column prop="totalSellQuantity" label="累计卖出" width="110" />
+      <el-table-column prop="remainingQuantity" label="剩余数量" width="110" />
+      <el-table-column label="持仓状态" width="150">
+        <template #default="{ row }">{{ row.positionStatus || '-' }}</template>
+      </el-table-column>
       <el-table-column prop="profitAmount" label="盈亏" width="110" />
+      <el-table-column prop="profitRate" label="盈亏比例" width="110" />
       <el-table-column label="模式内" width="100">
         <template #default="{ row }">
           <el-tag :type="row.isPatternTrade === 1 ? 'success' : 'danger'">
@@ -118,8 +129,14 @@ const csvHeaders = [
   ['stockName', '股票名称'],
   ['buyTime', '买入时间'],
   ['buyPrice', '买入价格'],
+  ['avgBuyPrice', '平均买入价'],
+  ['totalBuyQuantity', '累计买入数量'],
   ['sellTime', '卖出时间'],
   ['sellPrice', '卖出价格'],
+  ['avgSellPrice', '平均卖出价'],
+  ['totalSellQuantity', '累计卖出数量'],
+  ['remainingQuantity', '剩余数量'],
+  ['positionStatus', '持仓状态'],
   ['positionLevel', '仓位层级'],
   ['stopLossPrice', '止损价'],
   ['profitAmount', '盈亏金额'],

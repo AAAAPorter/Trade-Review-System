@@ -24,6 +24,26 @@ CREATE TABLE IF NOT EXISTS trade_record (
     profit_rate DECIMAL(8, 4),
     is_pattern_trade TINYINT DEFAULT 1 COMMENT '1模式内，0模式外',
     trade_date DATE,
+    total_buy_quantity INT COMMENT '累计买入数量',
+    total_sell_quantity INT COMMENT '累计卖出数量',
+    remaining_quantity INT COMMENT '剩余持仓数量',
+    avg_buy_price DECIMAL(10, 3) COMMENT '平均买入价',
+    avg_sell_price DECIMAL(10, 3) COMMENT '平均卖出价',
+    position_status VARCHAR(30) COMMENT '持仓状态：OPEN/PARTIAL_CLOSED/CLOSED',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS trade_execution_detail (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    trade_id BIGINT NOT NULL COMMENT '关联交易记录ID',
+    action_type VARCHAR(20) NOT NULL COMMENT 'BUY买入 / SELL卖出',
+    execution_time DATETIME NOT NULL COMMENT '成交时间',
+    price DECIMAL(10, 3) NOT NULL COMMENT '成交价格',
+    quantity INT NOT NULL COMMENT '成交数量，单位股',
+    position_note VARCHAR(100) COMMENT '仓位说明，例如1层、加1层、减半、清仓',
+    reason TEXT COMMENT '本次成交理由',
+    remark TEXT COMMENT '备注',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

@@ -1,7 +1,9 @@
 package com.tom.tradereview.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.tom.tradereview.dto.TradeWithExecutionDetailsDTO;
 import com.tom.tradereview.entity.TradeRecord;
+import com.tom.tradereview.service.TradeBundleService;
 import com.tom.tradereview.service.TradeRecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -25,6 +27,7 @@ import java.util.List;
 @RequestMapping("/api/trades")
 public class TradeRecordController {
     private final TradeRecordService tradeRecordService;
+    private final TradeBundleService tradeBundleService;
 
     @GetMapping
     public List<TradeRecord> list(
@@ -52,6 +55,11 @@ public class TradeRecordController {
     public TradeRecord create(@RequestBody TradeRecord tradeRecord) {
         tradeRecordService.save(tradeRecord);
         return tradeRecord;
+    }
+
+    @PostMapping("/with-execution-details")
+    public TradeRecord createWithExecutionDetails(@RequestBody TradeWithExecutionDetailsDTO dto) {
+        return tradeBundleService.createWithExecutionDetails(dto);
     }
 
     @PutMapping("/{id}")

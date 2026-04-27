@@ -34,6 +34,20 @@ CREATE TABLE IF NOT EXISTS trade_record (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS stock_company (
+    code VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    search_name VARCHAR(100) NOT NULL,
+    market VARCHAR(20),
+    exchange VARCHAR(50),
+    source VARCHAR(100),
+    fetched_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_stock_company_name (name),
+    INDEX idx_stock_company_search_name (search_name)
+);
+
 CREATE TABLE IF NOT EXISTS trade_execution_detail (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     trade_id BIGINT NOT NULL COMMENT '关联交易记录ID',

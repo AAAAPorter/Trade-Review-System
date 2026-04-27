@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AutoComplete, Button, Card, Col, Descriptions, Form, Input, Row, Select, Space, Spin, Switch, Tag, message } from 'antd';
 import { LeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -10,35 +10,28 @@ import {
   updateTrade,
 } from '../../api/trade';
 import { listMistakeTags } from '../../api/mistakeTag';
+import { searchStocks } from '../../api/stock';
 import TradeExecutionDetails from '../../components/TradeExecutionDetails';
 import { displayValue, formatDateTime, formatNumber, formatPercent, positionStatusMeta, profitColor } from '../../utils/format';
 
 const normalizeStockName = (value = '') => String(value).normalize('NFKC').replace(/\s+/g, '').toUpperCase();
 
-const prepareStocks = (items = []) =>
-  items.map((stock) => ({
-    ...stock,
-    searchName: normalizeStockName(stock.name),
+const buildStockOptions = (stocks = []) =>
+  stocks.slice(0, 20).map((stock) => ({
+    value: stock.name,
+    code: stock.code,
+    label: (
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+        <span>{stock.name}</span>
+        <span style={{ color: '#8c8c8c', fontVariantNumeric: 'tabular-nums' }}>{stock.code}</span>
+      </div>
+    ),
   }));
 
-const buildStockOptions = (stocks, keyword) => {
-  const text = String(keyword || '').trim();
-  const normalizedKeyword = normalizeStockName(text);
-  if (!normalizedKeyword) return [];
-
-  return stocks
-    .filter((stock) => stock.searchName.includes(normalizedKeyword) || stock.code.includes(text))
-    .slice(0, 20)
-    .map((stock) => ({
-      value: stock.name,
-      code: stock.code,
-      label: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-          <span>{stock.name}</span>
-          <span style={{ color: '#8c8c8c', fontVariantNumeric: 'tabular-nums' }}>{stock.code}</span>
-        </div>
-      ),
-    }));
+const findExactStock = (stocks = [], value) => {
+  const stockName = normalizeStockName(value);
+  if (!stockName) return null;
+  return stocks.find((stock) => normalizeStockName(stock.name) === stockName) || null;
 };
 
 const toExecutionPayload = (detail) => ({
@@ -89,11 +82,12 @@ export default function TradeForm() {
   const [trade, setTrade] = useState({});
   const [mistakeTags, setMistakeTags] = useState([]);
   const [draftExecutionDetails, setDraftExecutionDetails] = useState([]);
-  const [searchableStocks, setSearchableStocks] = useState([]);
-  const [stockByName, setStockByName] = useState(new Map());
+  const [stockMatches, setStockMatches] = useState([]);
   const [stockOptions, setStockOptions] = useState([]);
+  const [stockKeyword, setStockKeyword] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const stockSearchSeqRef = useRef(0);
 
   const loadTrade = async () => {
     if (!isEdit) return;
@@ -133,37 +127,14 @@ export default function TradeForm() {
   }, [id]);
 
   useEffect(() => {
-    let ignore = false;
+    if (!String(stockKeyword || '').trim()) return undefined;
 
-    const loadStocks = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.BASE_URL}data/a-share-companies.json`);
-        if (!response.ok) throw new Error('股票代码表加载失败');
-        const items = await response.json();
-        if (ignore) return;
+    const timer = window.setTimeout(() => {
+      loadStockOptions(stockKeyword);
+    }, 250);
 
-        const nextStocks = prepareStocks(items);
-        const nextStockByName = new Map(nextStocks.map((stock) => [stock.searchName, stock]));
-        setSearchableStocks(nextStocks);
-        setStockByName(nextStockByName);
-
-        const currentStock = nextStockByName.get(normalizeStockName(form.getFieldValue('stockName')));
-        if (currentStock && !form.getFieldValue('stockCode')) {
-          form.setFieldsValue({ stockCode: currentStock.code });
-        }
-      } catch (error) {
-        if (!ignore) {
-          message.warning(error.message || '股票代码表加载失败');
-        }
-      }
-    };
-
-    loadStocks();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
+    return () => window.clearTimeout(timer);
+  }, [stockKeyword]);
 
   const buildTradePayload = (values) => ({
     stockCode: values.stockCode,
@@ -173,22 +144,54 @@ export default function TradeForm() {
     keyLevel: values.keyLevel,
   });
 
-  const applyStockMatch = (value, { fillOfficialName = false } = {}) => {
-    if (!stockByName.size) return;
-
-    const stock = stockByName.get(normalizeStockName(value));
+  const applyStockMatch = (value, stocks = stockMatches, { fillOfficialName = false } = {}) => {
+    const stock = findExactStock(stocks, value);
     if (stock) {
       form.setFieldsValue({
         stockCode: stock.code,
         ...(fillOfficialName ? { stockName: stock.name } : {}),
       });
-    } else {
-      form.setFieldsValue({ stockCode: undefined });
+      return true;
+    }
+
+    form.setFieldsValue({ stockCode: undefined });
+    return false;
+  };
+
+  const loadStockOptions = async (keyword, { fillOfficialName = false } = {}) => {
+    const text = String(keyword || '').trim();
+    const requestSeq = stockSearchSeqRef.current + 1;
+    stockSearchSeqRef.current = requestSeq;
+
+    if (!text) {
+      setStockMatches([]);
+      setStockOptions([]);
+      return;
+    }
+
+    try {
+      const rows = await searchStocks(text, 20);
+      if (requestSeq !== stockSearchSeqRef.current) return;
+
+      const stocks = Array.isArray(rows) ? rows : [];
+      setStockMatches(stocks);
+      setStockOptions(buildStockOptions(stocks));
+      applyStockMatch(text, stocks, { fillOfficialName });
+    } catch (error) {
+      if (requestSeq !== stockSearchSeqRef.current) return;
+      setStockMatches([]);
+      setStockOptions([]);
     }
   };
 
   const handleStockNameChange = (value) => {
-    setStockOptions(buildStockOptions(searchableStocks, value));
+    setStockKeyword(value);
+    if (!String(value || '').trim()) {
+      setStockMatches([]);
+      setStockOptions([]);
+      form.setFieldsValue({ stockCode: undefined });
+      return;
+    }
     applyStockMatch(value);
   };
 
@@ -198,7 +201,11 @@ export default function TradeForm() {
   };
 
   const handleStockNameBlur = () => {
-    applyStockMatch(form.getFieldValue('stockName'), { fillOfficialName: true });
+    const value = form.getFieldValue('stockName');
+    const matched = applyStockMatch(value, stockMatches, { fillOfficialName: true });
+    if (!matched && String(value || '').trim()) {
+      loadStockOptions(value, { fillOfficialName: true });
+    }
   };
 
   const handleSave = async () => {
@@ -254,7 +261,7 @@ export default function TradeForm() {
                       options={stockOptions}
                       filterOption={false}
                       onChange={handleStockNameChange}
-                      onFocus={() => setStockOptions(buildStockOptions(searchableStocks, form.getFieldValue('stockName')))}
+                      onFocus={() => loadStockOptions(form.getFieldValue('stockName'))}
                       onSelect={handleStockSelect}
                       onBlur={handleStockNameBlur}
                     >

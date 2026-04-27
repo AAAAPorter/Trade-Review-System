@@ -35,6 +35,7 @@ export default function App() {
   ];
 
   const selectedKey = menuItems.find((item) => location.pathname.startsWith(item.key))?.key || '/dashboard';
+  const pageTitle = menuItems.find((item) => item.key === selectedKey)?.label || '个人交易复盘系统';
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -44,13 +45,13 @@ export default function App() {
             height: 64,
             margin: 16,
             color: '#fff',
-            fontSize: 18,
+            fontSize: 17,
             fontWeight: 700,
             textAlign: 'center',
             lineHeight: '64px',
           }}
         >
-          交易复盘系统
+          个人交易复盘系统
         </div>
         <Menu
           theme="dark"
@@ -61,7 +62,9 @@ export default function App() {
         />
       </Sider>
       <Layout>
-        <Header style={{ padding: 0, background: colorBgContainer }} />
+        <Header style={{ padding: '0 24px', background: colorBgContainer, borderBottom: '1px solid #eef0f5' }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#1f2937' }}>{pageTitle}</div>
+        </Header>
         <Content
           style={{
             margin: '24px 16px',

@@ -8,6 +8,7 @@ import {
   getExecutionDetails,
   updateExecutionDetail,
 } from '../../api/tradeExecutionDetail';
+import { formatNumber } from '../../utils/format';
 
 const emptyDetail = {
   actionType: 'BUY',
@@ -160,7 +161,7 @@ export default function TradeExecutionDetails({ tradeId = null, value = [], onCh
       render: (value) => <Tag color={value === 'BUY' ? 'success' : 'warning'}>{actionText(value)}</Tag>,
     },
     { title: '成交时间', dataIndex: 'executionTime', width: 170, render: formatDateTime },
-    { title: '成交价格', dataIndex: 'price', width: 110 },
+    { title: '成交价格', dataIndex: 'price', width: 110, align: 'right', render: (value) => formatNumber(value, 3) },
     { title: '成交数量', dataIndex: 'quantity', width: 110 },
     { title: '仓位说明', dataIndex: 'positionNote', width: 130, render: (value) => value || '-' },
     { title: '成交理由', dataIndex: 'reason', ellipsis: true, render: (value) => value || '-' },
@@ -209,6 +210,8 @@ export default function TradeExecutionDetails({ tradeId = null, value = [], onCh
         size="small"
         bordered
         pagination={false}
+        rowClassName={(record) => (record.actionType === 'BUY' ? 'execution-row-buy' : 'execution-row-sell')}
+        locale={{ emptyText: '暂无成交明细' }}
         scroll={{ x: 1100 }}
       />
 

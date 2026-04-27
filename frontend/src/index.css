@@ -26,3 +26,26 @@ body {
 .ant-layout {
   background: #f5f7fb;
 }
+
+.value-positive {
+  color: #0f9f6e;
+  font-weight: 600;
+}
+
+.value-negative {
+  color: #d4380d;
+  font-weight: 600;
+}
+
+.execution-row-buy > td {
+  background: #fbfffd;
+}
+
+.execution-row-sell > td {
+  background: #fffdf9;
+}
+
+.execution-row-buy:hover > td,
+.execution-row-sell:hover > td {
+  background: #f5f8ff !important;
+}

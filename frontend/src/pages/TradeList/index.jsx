@@ -13,6 +13,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { deleteTrade, listTradeMistakes, listTrades } from '../../api/trade';
 import { listMistakeTags } from '../../api/mistakeTag';
+import { displayValue, formatNumber, formatPercent, positionStatusMeta, profitColor } from '../../utils/format';
 
 const { RangePicker } = DatePicker;
 
@@ -48,11 +49,35 @@ const normalizeList = (res) => {
   return [];
 };
 
-const emptyText = (value) => (value === null || value === undefined || value === '' ? '-' : value);
-
 const formatDateParam = (value) => {
   if (!value) return undefined;
   return typeof value.format === 'function' ? value.format('YYYY-MM-DD') : value;
+};
+
+const numberText = (value, digits = 3) => formatNumber(value, digits);
+
+const profitText = (value, digits = 2) => {
+  if (value === null || value === undefined || value === '') return '-';
+  return (
+    <span style={{ color: profitColor(value), fontWeight: profitColor(value) ? 600 : undefined }}>
+      {formatNumber(value, digits)}
+    </span>
+  );
+};
+
+const percentText = (value) => {
+  if (value === null || value === undefined || value === '') return '-';
+  return (
+    <span style={{ color: profitColor(value), fontWeight: profitColor(value) ? 600 : undefined }}>
+      {formatPercent(value, 2)}
+    </span>
+  );
+};
+
+const positionStatusTag = (value) => {
+  const meta = positionStatusMeta(value);
+  if (meta.text === '-') return '-';
+  return <Tag color={meta.color}>{meta.text}</Tag>;
 };
 
 const escapeCsv = (value) => {
@@ -169,31 +194,31 @@ export default function TradeList() {
       title: '平均买入价',
       width: 120,
       align: 'right',
-      render: (_, record) => emptyText(record.avgBuyPrice ?? record.buyPrice),
+      render: (_, record) => numberText(record.avgBuyPrice ?? record.buyPrice, 3),
     },
     {
       title: '平均卖出价',
       width: 120,
       align: 'right',
-      render: (_, record) => emptyText(record.avgSellPrice ?? record.sellPrice),
+      render: (_, record) => numberText(record.avgSellPrice ?? record.sellPrice, 3),
     },
-    { title: '累计买入', dataIndex: 'totalBuyQuantity', width: 110, align: 'right', render: emptyText },
-    { title: '累计卖出', dataIndex: 'totalSellQuantity', width: 110, align: 'right', render: emptyText },
-    { title: '剩余数量', dataIndex: 'remainingQuantity', width: 110, align: 'right', render: emptyText },
-    { title: '持仓状态', dataIndex: 'positionStatus', width: 150, render: emptyText },
+    { title: '累计买入', dataIndex: 'totalBuyQuantity', width: 110, align: 'right', render: displayValue },
+    { title: '累计卖出', dataIndex: 'totalSellQuantity', width: 110, align: 'right', render: displayValue },
+    { title: '剩余数量', dataIndex: 'remainingQuantity', width: 110, align: 'right', render: displayValue },
+    { title: '持仓状态', dataIndex: 'positionStatus', width: 120, render: positionStatusTag },
     {
       title: '盈亏',
       dataIndex: 'profitAmount',
       width: 110,
       align: 'right',
-      render: (value) => emptyText(value),
+      render: (value) => profitText(value, 2),
     },
     {
       title: '盈亏比例',
       dataIndex: 'profitRate',
       width: 110,
       align: 'right',
-      render: (value) => emptyText(value),
+      render: percentText,
     },
     {
       title: '模式内',

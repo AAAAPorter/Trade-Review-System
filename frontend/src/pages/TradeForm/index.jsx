@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Col, Descriptions, Form, Input, Row, Select, Space, Spin, Switch, message } from 'antd';
+import { Button, Card, Col, Descriptions, Form, Input, Row, Select, Space, Spin, Switch, Tag, message } from 'antd';
 import { LeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -11,9 +11,7 @@ import {
 } from '../../api/trade';
 import { listMistakeTags } from '../../api/mistakeTag';
 import TradeExecutionDetails from '../../components/TradeExecutionDetails';
-
-const displayValue = (value) => (value === null || value === undefined || value === '' ? '-' : value);
-const formatDateTime = (value) => (value ? String(value).replace('T', ' ') : '-');
+import { displayValue, formatDateTime, formatNumber, formatPercent, positionStatusMeta, profitColor } from '../../utils/format';
 
 const toExecutionPayload = (detail) => ({
   actionType: detail.actionType,
@@ -25,18 +23,34 @@ const toExecutionPayload = (detail) => ({
   remark: detail.remark,
 });
 
+const positionStatusTag = (value) => {
+  const meta = positionStatusMeta(value);
+  if (meta.text === '-') return '-';
+  return <Tag color={meta.color}>{meta.text}</Tag>;
+};
+
+const profitValue = (value, digits = 2) => {
+  if (value === null || value === undefined || value === '') return '-';
+  return <span style={{ color: profitColor(value), fontWeight: profitColor(value) ? 600 : undefined }}>{formatNumber(value, digits)}</span>;
+};
+
+const profitPercent = (value) => {
+  if (value === null || value === undefined || value === '') return '-';
+  return <span style={{ color: profitColor(value), fontWeight: profitColor(value) ? 600 : undefined }}>{formatPercent(value, 2)}</span>;
+};
+
 const summaryItems = (trade) => [
   { label: '首次买入时间', children: formatDateTime(trade.buyTime) },
   { label: '最后卖出时间', children: formatDateTime(trade.sellTime) },
-  { label: '平均买入价', children: displayValue(trade.avgBuyPrice ?? trade.buyPrice) },
-  { label: '平均卖出价', children: displayValue(trade.avgSellPrice ?? trade.sellPrice) },
+  { label: '平均买入价', children: formatNumber(trade.avgBuyPrice ?? trade.buyPrice, 3) },
+  { label: '平均卖出价', children: formatNumber(trade.avgSellPrice ?? trade.sellPrice, 3) },
   { label: '累计买入数量', children: displayValue(trade.totalBuyQuantity) },
   { label: '累计卖出数量', children: displayValue(trade.totalSellQuantity) },
   { label: '剩余数量', children: displayValue(trade.remainingQuantity) },
-  { label: '持仓状态', children: displayValue(trade.positionStatus) },
+  { label: '持仓状态', children: positionStatusTag(trade.positionStatus) },
   { label: '统计归属日期', children: displayValue(trade.tradeDate) },
-  { label: '盈亏金额', children: displayValue(trade.profitAmount) },
-  { label: '盈亏比例', children: displayValue(trade.profitRate) },
+  { label: '盈亏金额', children: profitValue(trade.profitAmount, 2) },
+  { label: '盈亏比例', children: profitPercent(trade.profitRate) },
 ];
 
 export default function TradeForm() {

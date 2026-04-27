@@ -11,6 +11,7 @@ import com.tom.tradereview.service.TradeRecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -32,6 +33,7 @@ public class TradeExecutionDetailServiceImpl
     private final TradeRecordService tradeRecordService;
 
     @Override
+    @Transactional
     public TradeExecutionDetail createForTrade(Long tradeId, TradeExecutionDetail detail) {
         ensureTradeExists(tradeId);
         detail.setTradeId(tradeId);
@@ -45,6 +47,7 @@ public class TradeExecutionDetailServiceImpl
     }
 
     @Override
+    @Transactional
     public void createBatchForTrade(Long tradeId, List<TradeExecutionDetail> details) {
         ensureTradeExists(tradeId);
         if (details == null || details.isEmpty()) {
@@ -55,12 +58,15 @@ public class TradeExecutionDetailServiceImpl
             detail.setTradeId(tradeId);
             validateDetail(detail);
         });
-        validateSellQuantity(details);
+        List<TradeExecutionDetail> combinedDetails = new ArrayList<>(detailsForTrade(tradeId));
+        combinedDetails.addAll(details);
+        validateSellQuantity(combinedDetails);
         saveBatch(details);
         recalculateTradeSummary(tradeId);
     }
 
     @Override
+    @Transactional
     public TradeExecutionDetail updateDetail(Long id, TradeExecutionDetail detail) {
         TradeExecutionDetail oldDetail = getRequiredDetail(id);
         detail.setId(id);
@@ -79,6 +85,7 @@ public class TradeExecutionDetailServiceImpl
     }
 
     @Override
+    @Transactional
     public boolean deleteDetail(Long id) {
         TradeExecutionDetail detail = getRequiredDetail(id);
         boolean removed = removeById(id);

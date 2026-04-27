@@ -5,8 +5,10 @@ import com.tom.tradereview.dto.TradeWithExecutionDetailsDTO;
 import com.tom.tradereview.entity.TradeMistakeRel;
 import com.tom.tradereview.entity.TradeRecord;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -19,8 +21,10 @@ public class TradeBundleService {
 
     @Transactional
     public TradeRecord createWithExecutionDetails(TradeWithExecutionDetailsDTO dto) {
-        TradeRecord tradeRecord = dto.getTradeRecord() == null ? new TradeRecord() : dto.getTradeRecord();
-        tradeRecordService.save(tradeRecord);
+        if (dto == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "交易保存数据不能为空");
+        }
+        TradeRecord tradeRecord = tradeRecordService.createTrade(dto.getTradeRecord());
         replaceMistakes(tradeRecord.getId(), dto.getMistakeTagIds());
         tradeExecutionDetailService.createBatchForTrade(tradeRecord.getId(), dto.getExecutionDetails());
         return tradeRecordService.getById(tradeRecord.getId());

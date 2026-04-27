@@ -5,6 +5,7 @@ import com.tom.tradereview.dto.MistakeIdsDTO;
 import com.tom.tradereview.entity.TradeMistakeRel;
 import com.tom.tradereview.service.TradeMistakeRelService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,9 +32,10 @@ public class TradeMistakeController {
     }
 
     @PostMapping("/{id}/mistakes")
+    @Transactional
     public Boolean replaceMistakes(@PathVariable Long id, @RequestBody MistakeIdsDTO dto) {
         tradeMistakeRelService.remove(new LambdaQueryWrapper<TradeMistakeRel>().eq(TradeMistakeRel::getTradeId, id));
-        List<Long> mistakeTagIds = dto.getMistakeTagIds();
+        List<Long> mistakeTagIds = dto == null ? null : dto.getMistakeTagIds();
         if (mistakeTagIds == null || mistakeTagIds.isEmpty()) {
             return true;
         }

@@ -53,8 +53,7 @@ public class TradeRecordController {
 
     @PostMapping
     public TradeRecord create(@RequestBody TradeRecord tradeRecord) {
-        tradeRecordService.save(tradeRecord);
-        return tradeRecord;
+        return tradeRecordService.createTrade(tradeRecord);
     }
 
     @PostMapping("/with-execution-details")
@@ -64,13 +63,11 @@ public class TradeRecordController {
 
     @PutMapping("/{id}")
     public TradeRecord update(@PathVariable Long id, @RequestBody TradeRecord tradeRecord) {
-        tradeRecord.setId(id);
-        tradeRecordService.updateById(tradeRecord);
-        return tradeRecordService.getById(id);
+        return tradeRecordService.updateTrade(id, tradeRecord);
     }
 
     @DeleteMapping("/{id}")
     public Boolean delete(@PathVariable Long id) {
-        return tradeRecordService.removeById(id);
+        return tradeRecordService.deleteTrade(id);
     }
 }

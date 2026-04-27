@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Col, Descriptions, Form, Input, Row, Select, Space, Spin, Switch, Tag, message } from 'antd';
+import { AutoComplete, Button, Card, Col, Descriptions, Form, Input, Row, Select, Space, Spin, Switch, Tag, message } from 'antd';
 import { LeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -12,6 +12,34 @@ import {
 import { listMistakeTags } from '../../api/mistakeTag';
 import TradeExecutionDetails from '../../components/TradeExecutionDetails';
 import { displayValue, formatDateTime, formatNumber, formatPercent, positionStatusMeta, profitColor } from '../../utils/format';
+
+const normalizeStockName = (value = '') => String(value).normalize('NFKC').replace(/\s+/g, '').toUpperCase();
+
+const prepareStocks = (items = []) =>
+  items.map((stock) => ({
+    ...stock,
+    searchName: normalizeStockName(stock.name),
+  }));
+
+const buildStockOptions = (stocks, keyword) => {
+  const text = String(keyword || '').trim();
+  const normalizedKeyword = normalizeStockName(text);
+  if (!normalizedKeyword) return [];
+
+  return stocks
+    .filter((stock) => stock.searchName.includes(normalizedKeyword) || stock.code.includes(text))
+    .slice(0, 20)
+    .map((stock) => ({
+      value: stock.name,
+      code: stock.code,
+      label: (
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+          <span>{stock.name}</span>
+          <span style={{ color: '#8c8c8c', fontVariantNumeric: 'tabular-nums' }}>{stock.code}</span>
+        </div>
+      ),
+    }));
+};
 
 const toExecutionPayload = (detail) => ({
   actionType: detail.actionType,
@@ -61,6 +89,9 @@ export default function TradeForm() {
   const [trade, setTrade] = useState({});
   const [mistakeTags, setMistakeTags] = useState([]);
   const [draftExecutionDetails, setDraftExecutionDetails] = useState([]);
+  const [searchableStocks, setSearchableStocks] = useState([]);
+  const [stockByName, setStockByName] = useState(new Map());
+  const [stockOptions, setStockOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -101,6 +132,39 @@ export default function TradeForm() {
     loadInitialData();
   }, [id]);
 
+  useEffect(() => {
+    let ignore = false;
+
+    const loadStocks = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.BASE_URL}data/a-share-companies.json`);
+        if (!response.ok) throw new Error('股票代码表加载失败');
+        const items = await response.json();
+        if (ignore) return;
+
+        const nextStocks = prepareStocks(items);
+        const nextStockByName = new Map(nextStocks.map((stock) => [stock.searchName, stock]));
+        setSearchableStocks(nextStocks);
+        setStockByName(nextStockByName);
+
+        const currentStock = nextStockByName.get(normalizeStockName(form.getFieldValue('stockName')));
+        if (currentStock && !form.getFieldValue('stockCode')) {
+          form.setFieldsValue({ stockCode: currentStock.code });
+        }
+      } catch (error) {
+        if (!ignore) {
+          message.warning(error.message || '股票代码表加载失败');
+        }
+      }
+    };
+
+    loadStocks();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   const buildTradePayload = (values) => ({
     stockCode: values.stockCode,
     stockName: values.stockName,
@@ -108,6 +172,34 @@ export default function TradeForm() {
     teacherOpinion: values.teacherOpinion,
     keyLevel: values.keyLevel,
   });
+
+  const applyStockMatch = (value, { fillOfficialName = false } = {}) => {
+    if (!stockByName.size) return;
+
+    const stock = stockByName.get(normalizeStockName(value));
+    if (stock) {
+      form.setFieldsValue({
+        stockCode: stock.code,
+        ...(fillOfficialName ? { stockName: stock.name } : {}),
+      });
+    } else {
+      form.setFieldsValue({ stockCode: undefined });
+    }
+  };
+
+  const handleStockNameChange = (value) => {
+    setStockOptions(buildStockOptions(searchableStocks, value));
+    applyStockMatch(value);
+  };
+
+  const handleStockSelect = (value, option) => {
+    form.setFieldsValue({ stockName: value, stockCode: option.code });
+    setStockOptions([]);
+  };
+
+  const handleStockNameBlur = () => {
+    applyStockMatch(form.getFieldValue('stockName'), { fillOfficialName: true });
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -157,7 +249,17 @@ export default function TradeForm() {
                 </Col>
                 <Col span={8}>
                   <Form.Item name="stockName" label="股票名称" rules={[{ required: true, message: '请填写股票名称' }]}>
-                    <Input />
+                    <AutoComplete
+                      allowClear
+                      options={stockOptions}
+                      filterOption={false}
+                      onChange={handleStockNameChange}
+                      onFocus={() => setStockOptions(buildStockOptions(searchableStocks, form.getFieldValue('stockName')))}
+                      onSelect={handleStockSelect}
+                      onBlur={handleStockNameBlur}
+                    >
+                      <Input placeholder="输入股票名称" />
+                    </AutoComplete>
                   </Form.Item>
                 </Col>
                 <Col span={8}>

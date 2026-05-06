@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 单笔交易复盘接口。
+ *
+ * <p>一笔交易通常只对应一份复盘，因此读取时按 tradeId 查询，保存后再使用复盘自身 id 更新。</p>
+ */
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor

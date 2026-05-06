@@ -6,6 +6,9 @@ import com.tom.tradereview.mapper.TradeMistakeRelMapper;
 import com.tom.tradereview.service.TradeMistakeRelService;
 import org.springframework.stereotype.Service;
 
+/**
+ * 交易-错误标签关系服务实现。
+ */
 @Service
 public class TradeMistakeRelServiceImpl extends ServiceImpl<TradeMistakeRelMapper, TradeMistakeRel> implements TradeMistakeRelService {
 }

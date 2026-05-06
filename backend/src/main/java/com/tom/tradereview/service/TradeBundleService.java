@@ -12,6 +12,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * 交易组合保存服务。
+ *
+ * <p>新增交易页会同时提交交易基础信息、错误标签和成交明细草稿。这个服务把多张表写入放进
+ * 同一个事务，避免只保存了一部分数据。</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class TradeBundleService {
@@ -19,6 +25,9 @@ public class TradeBundleService {
     private final TradeMistakeRelService tradeMistakeRelService;
     private final TradeExecutionDetailService tradeExecutionDetailService;
 
+    /**
+     * 一次性创建交易及其关联数据。
+     */
     @Transactional
     public TradeRecord createWithExecutionDetails(TradeWithExecutionDetailsDTO dto) {
         if (dto == null) {
@@ -30,6 +39,9 @@ public class TradeBundleService {
         return tradeRecordService.getById(tradeRecord.getId());
     }
 
+    /**
+     * 交易标签采用替换语义：先移除旧关系，再保存本次提交的完整标签集合。
+     */
     private void replaceMistakes(Long tradeId, List<Long> mistakeTagIds) {
         tradeMistakeRelService.remove(new LambdaQueryWrapper<TradeMistakeRel>().eq(TradeMistakeRel::getTradeId, tradeId));
         if (mistakeTagIds == null || mistakeTagIds.isEmpty()) {

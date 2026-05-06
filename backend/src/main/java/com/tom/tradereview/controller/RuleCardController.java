@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 纪律卡片接口。
+ *
+ * <p>页面只需要最近一份周复盘中的三条纪律和训练主题，所以这里直接返回最新周复盘。</p>
+ */
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor
@@ -16,6 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class RuleCardController {
     private final WeeklyReviewService weeklyReviewService;
 
+    /**
+     * MySQL 的 limit 1 放在 wrapper.last 中，避免多取数据再在 Java 内存里裁剪。
+     */
     @GetMapping
     public WeeklyReview latest() {
         return weeklyReviewService.getOne(

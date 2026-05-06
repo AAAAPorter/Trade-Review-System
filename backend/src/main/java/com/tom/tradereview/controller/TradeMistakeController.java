@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * 交易与错误标签的关系接口。
+ *
+ * <p>接口挂在 /api/trades 下，是因为前端通常围绕某一笔交易读取或替换其标签集合。</p>
+ */
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor
@@ -31,6 +36,9 @@ public class TradeMistakeController {
                 .toList();
     }
 
+    /**
+     * 保存时采用“先删后插”的替换模式，保证前端多选框传来的结果就是最终关系集合。
+     */
     @PostMapping("/{id}/mistakes")
     @Transactional
     public Boolean replaceMistakes(@PathVariable Long id, @RequestBody MistakeIdsDTO dto) {

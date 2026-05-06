@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * 周复盘接口。
+ *
+ * <p>周复盘保存的是“统计快照 + 人工总结”，后续查看历史时不会因为交易数据变化而自动漂移。</p>
+ */
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor

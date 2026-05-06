@@ -6,6 +6,9 @@ import com.tom.tradereview.mapper.WeeklyReviewMapper;
 import com.tom.tradereview.service.WeeklyReviewService;
 import org.springframework.stereotype.Service;
 
+/**
+ * 周复盘服务实现。
+ */
 @Service
 public class WeeklyReviewServiceImpl extends ServiceImpl<WeeklyReviewMapper, WeeklyReview> implements WeeklyReviewService {
 }

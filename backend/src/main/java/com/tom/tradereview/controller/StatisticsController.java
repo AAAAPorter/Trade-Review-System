@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
+/**
+ * 统计接口。
+ *
+ * <p>当前只提供周统计，供首页仪表盘和周复盘页复用。</p>
+ */
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +24,9 @@ import java.time.LocalDate;
 public class StatisticsController {
     private final StatisticsService statisticsService;
 
+    /**
+     * 按闭区间 [start, end] 统计交易表现和高频错误。
+     */
     @GetMapping("/week")
     public WeeklyStatisticsDTO week(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,

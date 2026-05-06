@@ -26,6 +26,7 @@ import {
 
 const { RangePicker } = DatePicker;
 
+// 默认周区间为本周一到本周日；dayjs().day() 周日是 0，所以手动归为第 7 天。
 const weekRange = () => {
   const now = dayjs();
   const day = now.day() || 7;
@@ -33,6 +34,7 @@ const weekRange = () => {
   return [start, start.add(6, 'day')];
 };
 
+// 周复盘表单的完整默认值，用于新建和清空表单时保持字段稳定。
 const emptyValues = {
   weekStart: null,
   weekEnd: null,
@@ -61,21 +63,25 @@ const emptyValues = {
   executionScore: null,
 };
 
+// 空值展示统一处理，避免统计卡出现 undefined。
 const displayValue = (value) => {
   if (value === null || value === undefined || value === '') return '-';
   return value;
 };
 
+// 后端比例以小数保存，页面转成百分比显示。
 const formatPercent = (value) => {
   if (value === null || value === undefined || value === '') return '-';
   return `${(Number(value) * 100).toFixed(1)}%`;
 };
 
+// 后端返回 topMistakes 数组时，把它压成可存入周复盘的摘要文本。
 const formatMistakeSummary = (items = []) => {
   if (!items.length) return '';
   return items.map((item) => `${item.name}(${item.count})`).join(', ');
 };
 
+// 读取历史周复盘时，把日期字符串转换成 DatePicker 可用的 dayjs 对象。
 const toFormValues = (review = {}) => ({
   ...emptyValues,
   ...review,
@@ -83,12 +89,14 @@ const toFormValues = (review = {}) => ({
   weekEnd: review.weekEnd ? dayjs(review.weekEnd) : null,
 });
 
+// 保存前把 dayjs 日期转换成后端 LocalDate 友好的字符串。
 const toPayload = (values) => ({
   ...values,
   weekStart: values.weekStart ? values.weekStart.format('YYYY-MM-DD') : '',
   weekEnd: values.weekEnd ? values.weekEnd.format('YYYY-MM-DD') : '',
 });
 
+// 周复盘页：先生成统计快照，再补充人工总结、下周纪律和训练主题。
 export default function WeeklyReview() {
   const [form] = Form.useForm();
   const [reviews, setReviews] = useState([]);
@@ -96,6 +104,8 @@ export default function WeeklyReview() {
   const [dateRange, setDateRange] = useState(weekRange());
   const [statisticsLoading, setStatisticsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // 这些字段会实时驱动顶部统计卡和统计快照，无需额外维护一份 summary state。
   const watchedValues = {
     tradeCount: Form.useWatch('tradeCount', form),
     winCount: Form.useWatch('winCount', form),
@@ -112,11 +122,13 @@ export default function WeeklyReview() {
     weekEnd: Form.useWatch('weekEnd', form),
   };
 
+  // 加载历史周复盘列表，右侧表格点击后可回填表单。
   const loadReviews = async () => {
     const res = await listWeeklyReviews();
     setReviews(res || []);
   };
 
+  // 把统计接口结果写入表单，作为本周复盘的快照初始值。
   const applyStatistics = (stats = {}, range = dateRange) => {
     const [weekStart, weekEnd] = range;
     form.setFieldsValue({
@@ -136,6 +148,7 @@ export default function WeeklyReview() {
     });
   };
 
+  // 按当前日期范围请求周统计；范围非法时给出轻提示。
   const loadStatistics = async (range = dateRange) => {
     if (!range || range.length !== 2) {
       message.warning('请先选择日期范围');
@@ -154,6 +167,7 @@ export default function WeeklyReview() {
     }
   };
 
+  // 新建周复盘：切回本周范围、清空当前 id，并重新生成统计。
   const resetForm = async () => {
     const range = weekRange();
     setCurrentId(null);
@@ -162,6 +176,7 @@ export default function WeeklyReview() {
     await loadStatistics(range);
   };
 
+  // 顶部范围选择器变化后，同步表单中的 weekStart/weekEnd 并立即重新拉取统计。
   const handleRangeChange = async (range) => {
     if (!range || range.length !== 2) {
       setDateRange([]);
@@ -173,6 +188,7 @@ export default function WeeklyReview() {
     await loadStatistics(range);
   };
 
+  // 表单内单独修改周开始/周结束时，同步顶部 RangePicker。
   const syncRangeFromForm = (nextValues) => {
     const values = { ...form.getFieldsValue(['weekStart', 'weekEnd']), ...nextValues };
     if (values.weekStart && values.weekEnd) {
@@ -180,6 +196,7 @@ export default function WeeklyReview() {
     }
   };
 
+  // 从历史列表载入一份已保存的周复盘。
   const loadReview = async (row) => {
     const review = await getWeeklyReview(row.id);
     setCurrentId(review.id);
@@ -189,6 +206,7 @@ export default function WeeklyReview() {
     }
   };
 
+  // 保存时根据 currentId 判断是新建还是更新；保存成功后刷新历史列表。
   const save = async () => {
     setSaving(true);
     try {
@@ -218,6 +236,7 @@ export default function WeeklyReview() {
   };
 
   useEffect(() => {
+    // 初始化同时加载历史复盘和当前周统计。
     const loadInitialData = async () => {
       const range = weekRange();
       setDateRange(range);
@@ -227,6 +246,7 @@ export default function WeeklyReview() {
     loadInitialData();
   }, []);
 
+  // 右侧历史列表只展示用于快速识别的关键字段，点击行后读取完整详情。
   const historyColumns = [
     { title: '开始', dataIndex: 'weekStart', width: 110 },
     { title: '结束', dataIndex: 'weekEnd', width: 110 },

@@ -21,6 +21,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * 成交明细服务实现。
+ *
+ * <p>这是系统里最关键的业务服务：每次明细变化后，都会重新聚合所属交易的买卖均价、累计数量、
+ * 剩余数量、持仓状态、已实现盈亏和收益率。这样交易列表、详情、周统计都只需要读取 trade_record。</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class TradeExecutionDetailServiceImpl
@@ -32,6 +38,9 @@ public class TradeExecutionDetailServiceImpl
 
     private final TradeRecordService tradeRecordService;
 
+    /**
+     * 新增单条成交明细：先校验交易存在，再校验明细合法性和卖出数量约束。
+     */
     @Override
     @Transactional
     public TradeExecutionDetail createForTrade(Long tradeId, TradeExecutionDetail detail) {
@@ -46,6 +55,9 @@ public class TradeExecutionDetailServiceImpl
         return detail;
     }
 
+    /**
+     * 批量新增明细，通常用于新增交易时把前端草稿一次性落库。
+     */
     @Override
     @Transactional
     public void createBatchForTrade(Long tradeId, List<TradeExecutionDetail> details) {
@@ -65,6 +77,9 @@ public class TradeExecutionDetailServiceImpl
         recalculateTradeSummary(tradeId);
     }
 
+    /**
+     * 编辑明细时先用新明细替换旧明细参与校验，避免卖出数量超过买入数量。
+     */
     @Override
     @Transactional
     public TradeExecutionDetail updateDetail(Long id, TradeExecutionDetail detail) {
@@ -84,6 +99,9 @@ public class TradeExecutionDetailServiceImpl
         return getById(id);
     }
 
+    /**
+     * 删除明细后重新计算交易汇总，保持主表派生字段与明细一致。
+     */
     @Override
     @Transactional
     public boolean deleteDetail(Long id) {
@@ -93,6 +111,12 @@ public class TradeExecutionDetailServiceImpl
         return removed;
     }
 
+    /**
+     * 从成交明细反算交易主表的汇总字段。
+     *
+     * <p>如果已经没有明细，则把所有派生字段清空；否则按 BUY/SELL 分别计算均价和数量，
+     * 再根据是否清仓/部分平仓决定是否计算已实现盈亏。</p>
+     */
     private void recalculateTradeSummary(Long tradeId) {
         List<TradeExecutionDetail> details = detailsForTrade(tradeId);
         int totalBuyQuantity = sumQuantity(details, BUY);
@@ -145,6 +169,9 @@ public class TradeExecutionDetailServiceImpl
                 .set(TradeRecord::getProfitRate, profitRate));
     }
 
+    /**
+     * 根据剩余数量判断持仓状态。
+     */
     private String positionStatus(int totalSellQuantity, int remainingQuantity) {
         if (remainingQuantity > 0 && totalSellQuantity == 0) {
             return "OPEN";
@@ -158,6 +185,9 @@ public class TradeExecutionDetailServiceImpl
         return null;
     }
 
+    /**
+     * 加权平均价 = 该方向成交金额合计 / 该方向成交数量合计。
+     */
     private BigDecimal avgPrice(List<TradeExecutionDetail> details, String actionType, int quantity) {
         if (quantity == 0) {
             return null;
@@ -166,6 +196,9 @@ public class TradeExecutionDetailServiceImpl
         return amount.divide(BigDecimal.valueOf(quantity), 3, RoundingMode.HALF_UP);
     }
 
+    /**
+     * 计算某个方向的成交金额合计。
+     */
     private BigDecimal totalAmount(List<TradeExecutionDetail> details, String actionType) {
         return details.stream()
                 .filter(item -> actionType.equals(item.getActionType()))
@@ -173,6 +206,11 @@ public class TradeExecutionDetailServiceImpl
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    /**
+     * 计算已实现盈亏。
+     *
+     * <p>清仓时用总卖出金额 - 总买入金额；部分平仓时只计算已卖出数量对应的买入成本。</p>
+     */
     private BigDecimal profitAmount(
             String positionStatus,
             BigDecimal totalBuyAmount,
@@ -194,6 +232,9 @@ public class TradeExecutionDetailServiceImpl
         return profit.setScale(2, RoundingMode.HALF_UP);
     }
 
+    /**
+     * 计算已实现收益率，分母与 profitAmount 的成本口径保持一致。
+     */
     private BigDecimal profitRate(
             String positionStatus,
             BigDecimal profitAmount,
@@ -218,6 +259,9 @@ public class TradeExecutionDetailServiceImpl
         return profitAmount.divide(denominator, 4, RoundingMode.HALF_UP);
     }
 
+    /**
+     * 获取某方向最早成交时间。
+     */
     private LocalDateTime firstExecutionTime(List<TradeExecutionDetail> details, String actionType) {
         return details.stream()
                 .filter(item -> actionType.equals(item.getActionType()))
@@ -227,6 +271,9 @@ public class TradeExecutionDetailServiceImpl
                 .orElse(null);
     }
 
+    /**
+     * 获取某方向最晚成交时间。
+     */
     private LocalDateTime lastExecutionTime(List<TradeExecutionDetail> details, String actionType) {
         return details.stream()
                 .filter(item -> actionType.equals(item.getActionType()))
@@ -236,6 +283,9 @@ public class TradeExecutionDetailServiceImpl
                 .orElse(null);
     }
 
+    /**
+     * 汇总某方向的成交数量。
+     */
     private int sumQuantity(List<TradeExecutionDetail> details, String actionType) {
         return details.stream()
                 .filter(item -> actionType.equals(item.getActionType()))
@@ -244,6 +294,9 @@ public class TradeExecutionDetailServiceImpl
                 .reduce(0, Integer::sum);
     }
 
+    /**
+     * 单条明细的基础业务校验。
+     */
     private void validateDetail(TradeExecutionDetail detail) {
         if (!BUY.equals(detail.getActionType()) && !SELL.equals(detail.getActionType())) {
             throw badRequest("actionType 只允许 BUY 或 SELL");
@@ -259,6 +312,9 @@ public class TradeExecutionDetailServiceImpl
         }
     }
 
+    /**
+     * 防止出现“卖出数量大于买入数量”的非法持仓。
+     */
     private void validateSellQuantity(List<TradeExecutionDetail> details) {
         int totalBuyQuantity = sumQuantity(details, BUY);
         int totalSellQuantity = sumQuantity(details, SELL);
@@ -267,17 +323,26 @@ public class TradeExecutionDetailServiceImpl
         }
     }
 
+    /**
+     * 查询某笔交易的全部成交明细。
+     */
     private List<TradeExecutionDetail> detailsForTrade(Long tradeId) {
         return list(new LambdaQueryWrapper<TradeExecutionDetail>()
                 .eq(TradeExecutionDetail::getTradeId, tradeId));
     }
 
+    /**
+     * 写入明细前必须确认交易主表存在。
+     */
     private void ensureTradeExists(Long tradeId) {
         if (tradeId == null || tradeRecordService.getById(tradeId) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "交易记录不存在");
         }
     }
 
+    /**
+     * 编辑或删除明细时使用，找不到直接返回 404。
+     */
     private TradeExecutionDetail getRequiredDetail(Long id) {
         TradeExecutionDetail detail = getById(id);
         if (detail == null) {
@@ -286,6 +351,9 @@ public class TradeExecutionDetailServiceImpl
         return detail;
     }
 
+    /**
+     * 统一构造 400 业务异常。
+     */
     private ResponseStatusException badRequest(String message) {
         return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
     }

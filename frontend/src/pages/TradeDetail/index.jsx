@@ -7,22 +7,26 @@ import { listMistakeTags } from '../../api/mistakeTag';
 import TradeExecutionDetails from '../../components/TradeExecutionDetails';
 import { displayValue, formatDateTime, formatNumber, formatPercent, positionStatusMeta, profitColor } from '../../utils/format';
 
+// 把后端状态码转换成标签展示。
 const positionStatusTag = (value) => {
   const meta = positionStatusMeta(value);
   if (meta.text === '-') return '-';
   return <Tag color={meta.color}>{meta.text}</Tag>;
 };
 
+// 盈亏金额按正负显示不同颜色，空值保持 '-'。
 const profitValue = (value, digits = 2) => {
   if (value === null || value === undefined || value === '') return '-';
   return <span style={{ color: profitColor(value), fontWeight: profitColor(value) ? 600 : undefined }}>{formatNumber(value, digits)}</span>;
 };
 
+// 盈亏比例沿用同一套颜色规则。
 const profitPercent = (value) => {
   if (value === null || value === undefined || value === '') return '-';
   return <span style={{ color: profitColor(value), fontWeight: profitColor(value) ? 600 : undefined }}>{formatPercent(value, 2)}</span>;
 };
 
+// 交易汇总字段由后端成交明细服务反算，详情页只负责展示。
 const summaryItems = (trade) => [
   { label: '首次买入时间', children: formatDateTime(trade.buyTime) },
   { label: '最后卖出时间', children: formatDateTime(trade.sellTime) },
@@ -37,6 +41,7 @@ const summaryItems = (trade) => [
   { label: '盈亏比例', children: profitPercent(trade.profitRate) },
 ];
 
+// 交易详情页：同时展示基础信息、系统汇总、成交明细、错误标签和交易观察。
 export default function TradeDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -44,6 +49,7 @@ export default function TradeDetail() {
   const [mistakeTagNames, setMistakeTagNames] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // 并行读取交易、交易已选标签、全部标签字典，再把标签 id 映射成名称。
   const loadData = async () => {
     setLoading(true);
     try {

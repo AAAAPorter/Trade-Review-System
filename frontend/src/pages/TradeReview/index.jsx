@@ -4,6 +4,7 @@ import { LeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createTradeReview, getTradeReview, updateTradeReview } from '../../api/tradeReview';
 
+// 单笔复盘页：围绕一笔交易记录沉淀操作经过、原计划、执行偏差和改进规则。
 export default function TradeReview() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export default function TradeReview() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // 如果这笔交易已有复盘，就回填表单；否则先把 tradeId 写入表单，保存时创建新复盘。
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -31,6 +33,7 @@ export default function TradeReview() {
     loadData();
   }, [id]);
 
+  // 同一个按钮同时支持新建和更新，reviewId 是否存在决定调用哪个接口。
   const handleSave = async () => {
     setSaving(true);
     try {

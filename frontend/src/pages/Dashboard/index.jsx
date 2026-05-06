@@ -9,6 +9,7 @@ import { getRuleCard } from '../../api/weeklyReview';
 
 const { RangePicker } = DatePicker;
 
+// 默认统计本周：dayjs().day() 周日返回 0，这里把周日按第 7 天处理。
 const weekRange = () => {
   const now = dayjs();
   const day = now.day() || 7;
@@ -16,17 +17,20 @@ const weekRange = () => {
   return [start, start.add(6, 'day')];
 };
 
+// 后端返回小数形式的比例，页面展示成百分比。
 const formatPercent = (value) => {
   if (value === null || value === undefined || value === '') return '-';
   return `${(Number(value) * 100).toFixed(1)}%`;
 };
 
+// 首页仪表盘：按日期范围加载周统计，并展示最近一份纪律卡。
 export default function Dashboard() {
   const [summary, setSummary] = useState({});
   const [ruleCard, setRuleCard] = useState(null);
   const [dateRange, setDateRange] = useState(weekRange());
   const [loading, setLoading] = useState(false);
 
+  // 同时请求统计和最新纪律卡；纪律卡失败不影响核心统计展示。
   const loadData = async (range = dateRange) => {
     const [start, end] = range?.length === 2 ? range : weekRange();
     setLoading(true);

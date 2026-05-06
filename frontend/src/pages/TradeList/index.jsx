@@ -17,6 +17,7 @@ import { displayValue, formatNumber, formatPercent, positionStatusMeta, profitCo
 
 const { RangePicker } = DatePicker;
 
+// CSV 导出的字段顺序和中文表头集中维护，避免导出逻辑散落在列配置里。
 const csvHeaders = [
   ['tradeDate', '交易日期'],
   ['stockCode', '股票代码'],
@@ -43,12 +44,14 @@ const csvHeaders = [
   ['keyLevel', '关键位'],
 ];
 
+// 兼容后端直接返回数组或包装在 data 字段里的两种响应形态。
 const normalizeList = (res) => {
   if (Array.isArray(res)) return res;
   if (Array.isArray(res?.data)) return res.data;
   return [];
 };
 
+// 日期选择器返回 dayjs 对象，接口参数需要 YYYY-MM-DD 字符串。
 const formatDateParam = (value) => {
   if (!value) return undefined;
   return typeof value.format === 'function' ? value.format('YYYY-MM-DD') : value;
@@ -56,6 +59,7 @@ const formatDateParam = (value) => {
 
 const numberText = (value, digits = 3) => formatNumber(value, digits);
 
+// 表格中盈利/亏损金额的颜色展示。
 const profitText = (value, digits = 2) => {
   if (value === null || value === undefined || value === '') return '-';
   return (
@@ -65,6 +69,7 @@ const profitText = (value, digits = 2) => {
   );
 };
 
+// 表格中盈利/亏损比例的颜色展示。
 const percentText = (value) => {
   if (value === null || value === undefined || value === '') return '-';
   return (
@@ -74,17 +79,20 @@ const percentText = (value) => {
   );
 };
 
+// 持仓状态码转换成标签。
 const positionStatusTag = (value) => {
   const meta = positionStatusMeta(value);
   if (meta.text === '-') return '-';
   return <Tag color={meta.color}>{meta.text}</Tag>;
 };
 
+// CSV 单元格需要转义双引号，并用双引号包裹，避免中文逗号/换行破坏列结构。
 const escapeCsv = (value) => {
   const text = value === null || value === undefined ? '' : String(value);
   return `"${text.replaceAll('"', '""')}"`;
 };
 
+// 交易列表页：负责筛选、批量选择、导出、删除和跳转到详情/编辑/复盘。
 export default function TradeList() {
   const navigate = useNavigate();
   const [filterForm] = Form.useForm();
@@ -94,6 +102,7 @@ export default function TradeList() {
   const [mistakeTagMap, setMistakeTagMap] = useState({});
   const [loading, setLoading] = useState(false);
 
+  // 把筛选表单值转换成后端接口参数；空值用 undefined 让后端忽略该条件。
   const buildParams = (values = {}) => {
     const [startDate, endDate] = values.dateRange || [];
     return {
@@ -105,6 +114,7 @@ export default function TradeList() {
     };
   };
 
+  // 列表接口只返回交易主表，因此需要额外请求每笔交易的错误标签并映射成名称。
   const attachMistakeTags = async (rows, tagMap) => {
     const mistakeResults = await Promise.all(
       rows.map((row) => listTradeMistakes(row.id).catch(() => []))
@@ -119,6 +129,7 @@ export default function TradeList() {
     });
   };
 
+  // 按当前筛选条件重新加载列表，同时清空选中状态，避免导出已不存在的旧行。
   const loadData = async (tagMap = mistakeTagMap, values = filterForm.getFieldsValue()) => {
     setLoading(true);
     try {
@@ -133,6 +144,7 @@ export default function TradeList() {
   };
 
   useEffect(() => {
+    // 初始化先加载标签字典，再加载交易列表并附加标签名称。
     const loadInitialData = async () => {
       setLoading(true);
       try {
@@ -150,11 +162,13 @@ export default function TradeList() {
     loadInitialData();
   }, []);
 
+  // 重置筛选条件后按空条件重新查询。
   const handleReset = () => {
     filterForm.resetFields();
     loadData(mistakeTagMap, {});
   };
 
+  // 删除成功后重新加载列表，保持筛选结果与后端一致。
   const handleDelete = async (id) => {
     try {
       await deleteTrade(id);
@@ -165,6 +179,7 @@ export default function TradeList() {
     }
   };
 
+  // 将当前筛选结果或选中结果导出为带 BOM 的 CSV，保证 Excel 打开中文不乱码。
   const exportCsv = (sourceRows, title) => {
     const rows = sourceRows.map((trade) => ({
       ...trade,
@@ -186,6 +201,7 @@ export default function TradeList() {
     URL.revokeObjectURL(url);
   };
 
+  // 表格列定义集中维护；系统汇总字段直接来自后端 trade_record。
   const columns = [
     { title: '统计归属日期', dataIndex: 'tradeDate', width: 130, fixed: 'left' },
     { title: '代码', dataIndex: 'stockCode', width: 110, fixed: 'left' },
@@ -290,6 +306,7 @@ export default function TradeList() {
     },
   ];
 
+  // 受控行选择，导出选中数据时直接使用 selectedTrades。
   const rowSelection = {
     fixed: true,
     selectedRowKeys,

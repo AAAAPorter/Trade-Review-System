@@ -19,6 +19,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * 统计聚合服务。
+ *
+ * <p>当前聚合粒度是周：先按 tradeDate 找到周期内交易，再计算胜负、盈亏、模式内外和高频错误。
+ * 统计结果供首页展示，也会作为周复盘的初始快照。</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class StatisticsService {
@@ -26,6 +32,9 @@ public class StatisticsService {
     private final TradeMistakeRelService tradeMistakeRelService;
     private final MistakeTagService mistakeTagService;
 
+    /**
+     * 生成某个日期闭区间的周统计。
+     */
     public WeeklyStatisticsDTO week(LocalDate start, LocalDate end) {
         List<TradeRecord> trades = tradeRecordService.list(new LambdaQueryWrapper<TradeRecord>()
                 .ge(TradeRecord::getTradeDate, start)
@@ -57,6 +66,9 @@ public class StatisticsService {
         return dto;
     }
 
+    /**
+     * 统计周期内交易关联的错误标签出现次数，并取前 5 个高频问题。
+     */
     private List<MistakeCountDTO> topMistakes(List<TradeRecord> trades) {
         List<Long> tradeIds = trades.stream().map(TradeRecord::getId).filter(Objects::nonNull).toList();
         if (tradeIds.isEmpty()) {
@@ -79,6 +91,9 @@ public class StatisticsService {
                 .toList();
     }
 
+    /**
+     * 把错误排行压成可直接存入周复盘表的摘要文本。
+     */
     private String formatTopMistakes(List<MistakeCountDTO> topMistakes) {
         if (topMistakes == null || topMistakes.isEmpty()) {
             return null;
@@ -88,6 +103,9 @@ public class StatisticsService {
                 .collect(Collectors.joining(", "));
     }
 
+    /**
+     * 找到周期内盈利最大或亏损最大的股票名称，用于周复盘快速定位样本。
+     */
     private String bestTradeName(List<TradeRecord> trades, boolean biggestWin) {
         Comparator<TradeRecord> comparator = Comparator.comparing(
                 trade -> trade.getProfitAmount() == null ? BigDecimal.ZERO : trade.getProfitAmount()
@@ -100,10 +118,12 @@ public class StatisticsService {
                 .orElse(null);
     }
 
+    /** 判断金额是否为正收益。 */
     private boolean positive(BigDecimal value) {
         return value != null && value.compareTo(BigDecimal.ZERO) > 0;
     }
 
+    /** 判断金额是否为负收益。 */
     private boolean negative(BigDecimal value) {
         return value != null && value.compareTo(BigDecimal.ZERO) < 0;
     }

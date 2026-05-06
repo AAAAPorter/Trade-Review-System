@@ -4,10 +4,12 @@ import { getRuleCard } from '../../api/weeklyReview';
 
 const { Title, Text } = Typography;
 
+// 纪律卡页面只展示最近一份周复盘沉淀出的三条盘中纪律。
 export default function RuleCard() {
   const [cardData, setCardData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 后端 /rule-card 已经返回最新周复盘，这里不需要再做排序。
   useEffect(() => {
     const fetchData = async () => {
       try {

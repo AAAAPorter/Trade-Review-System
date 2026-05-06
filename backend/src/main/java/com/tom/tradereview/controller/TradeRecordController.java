@@ -21,6 +21,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * 交易记录接口。
+ *
+ * <p>这里负责“交易主表”的查询和基础 CRUD；涉及成交明细、错误标签一起创建的复合流程，
+ * 会交给 TradeBundleService 保证事务一致性。</p>
+ */
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor
@@ -29,6 +35,11 @@ public class TradeRecordController {
     private final TradeRecordService tradeRecordService;
     private final TradeBundleService tradeBundleService;
 
+    /**
+     * 交易列表支持按统计归属日期、股票名称、模式内外过滤。
+     *
+     * <p>LambdaQueryWrapper 的第一个 boolean 参数表示条件是否生效，因此空筛选项不会拼进 SQL。</p>
+     */
     @GetMapping
     public List<TradeRecord> list(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -51,21 +62,33 @@ public class TradeRecordController {
         return tradeRecordService.getById(id);
     }
 
+    /**
+     * 只创建交易基础信息；成交明细可在后续通过 /execution-details 接口逐条维护。
+     */
     @PostMapping
     public TradeRecord create(@RequestBody TradeRecord tradeRecord) {
         return tradeRecordService.createTrade(tradeRecord);
     }
 
+    /**
+     * 新增交易页的一次性保存入口：基础信息、错误标签、草稿成交明细一起落库。
+     */
     @PostMapping("/with-execution-details")
     public TradeRecord createWithExecutionDetails(@RequestBody TradeWithExecutionDetailsDTO dto) {
         return tradeBundleService.createWithExecutionDetails(dto);
     }
 
+    /**
+     * 只更新用户可编辑的交易基础信息；系统汇总字段由成交明细服务反算。
+     */
     @PutMapping("/{id}")
     public TradeRecord update(@PathVariable Long id, @RequestBody TradeRecord tradeRecord) {
         return tradeRecordService.updateTrade(id, tradeRecord);
     }
 
+    /**
+     * 删除交易时，Service 会同步清理成交明细、错误标签关系和单笔复盘。
+     */
     @DeleteMapping("/{id}")
     public Boolean delete(@PathVariable Long id) {
         return tradeRecordService.deleteTrade(id);

@@ -1,3 +1,5 @@
+-- 初始化数据库脚本。
+-- 运行后会创建交易复盘系统所需的主表、关系表、周复盘表，并写入一组默认错误标签。
 CREATE DATABASE IF NOT EXISTS trade_review_system
     DEFAULT CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
@@ -7,6 +9,7 @@ USE trade_review_system;
 SET NAMES utf8mb4;
 
 CREATE TABLE IF NOT EXISTS trade_record (
+    -- 交易主表：保存用户录入的基础信息，以及由成交明细反算出的汇总字段。
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     stock_code VARCHAR(20) NOT NULL,
     stock_name VARCHAR(50) NOT NULL,
@@ -35,6 +38,7 @@ CREATE TABLE IF NOT EXISTS trade_record (
 );
 
 CREATE TABLE IF NOT EXISTS stock_company (
+    -- A 股公司基础资料：用于前端股票名称自动补全和代码回填。
     code VARCHAR(20) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     search_name VARCHAR(100) NOT NULL,
@@ -49,6 +53,7 @@ CREATE TABLE IF NOT EXISTS stock_company (
 );
 
 CREATE TABLE IF NOT EXISTS trade_execution_detail (
+    -- 成交明细表：一笔交易可以包含多次买入/卖出，后端会据此反算 trade_record 汇总字段。
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     trade_id BIGINT NOT NULL COMMENT '关联交易记录ID',
     action_type VARCHAR(20) NOT NULL COMMENT 'BUY买入 / SELL卖出',
@@ -63,18 +68,21 @@ CREATE TABLE IF NOT EXISTS trade_execution_detail (
 );
 
 CREATE TABLE IF NOT EXISTS mistake_tag (
+    -- 错误标签字典：用于给交易做问题归因。
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     description TEXT
 );
 
 CREATE TABLE IF NOT EXISTS trade_mistake_rel (
+    -- 交易与错误标签的多对多关系表。
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     trade_id BIGINT NOT NULL,
     mistake_tag_id BIGINT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS trade_review (
+    -- 单笔交易复盘：记录操作经过、计划、执行偏差、真正问题和改进规则。
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     trade_id BIGINT NOT NULL,
     operation_process TEXT COMMENT '操作经过',
@@ -87,6 +95,7 @@ CREATE TABLE IF NOT EXISTS trade_review (
 );
 
 CREATE TABLE IF NOT EXISTS weekly_review (
+    -- 周复盘：保存统计快照、人工总结、下周纪律和训练主题。
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     week_start DATE NOT NULL,
     week_end DATE NOT NULL,
@@ -118,6 +127,7 @@ CREATE TABLE IF NOT EXISTS weekly_review (
 );
 
 INSERT INTO mistake_tag (name, description)
+-- 默认标签采用“表为空才插入”的方式，避免重复初始化。
 SELECT * FROM (
     SELECT '怕踏空追高', '位置已经较高，仍因怕错过而买入'
     UNION ALL SELECT '急跌恐慌卖', '没有跌破止损位，仅因急跌提前卖出'

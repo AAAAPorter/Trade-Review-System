@@ -7,6 +7,7 @@ import 'antd/dist/reset.css';
 import App from './App';
 import './index.css';
 
+// 应用根节点：路由、Ant Design 中文语言包和主题色都在这里集中配置。
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>

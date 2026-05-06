@@ -17,6 +17,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * 交易基础信息服务实现。
+ *
+ * <p>这里刻意只接受用户可编辑字段，避免前端误传 buyPrice/profitAmount 等系统汇总字段时污染数据。
+ * 汇总字段统一由 TradeExecutionDetailServiceImpl 根据成交明细反算。</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, TradeRecord> implements TradeRecordService {
@@ -24,6 +30,9 @@ public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, Trade
     private final TradeExecutionDetailMapper tradeExecutionDetailMapper;
     private final TradeReviewMapper tradeReviewMapper;
 
+    /**
+     * 创建交易主表记录，并做基础必填校验。
+     */
     @Override
     public TradeRecord createTrade(TradeRecord tradeRecord) {
         TradeRecord payload = editablePayload(tradeRecord);
@@ -32,6 +41,9 @@ public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, Trade
         return payload;
     }
 
+    /**
+     * 更新前先确认记录存在，再只复制允许编辑的字段。
+     */
     @Override
     public TradeRecord updateTrade(Long id, TradeRecord tradeRecord) {
         if (id == null || getById(id) == null) {
@@ -44,6 +56,9 @@ public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, Trade
         return getById(id);
     }
 
+    /**
+     * 删除交易时需要手动清理关联表，保证交易详情页和统计不会读到残留数据。
+     */
     @Override
     @Transactional
     public boolean deleteTrade(Long id) {
@@ -56,6 +71,9 @@ public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, Trade
         return removeById(id);
     }
 
+    /**
+     * 构造白名单 payload，只保留前端基础信息表单真正允许编辑的字段。
+     */
     private TradeRecord editablePayload(TradeRecord source) {
         if (source == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "交易基础信息不能为空");
@@ -69,6 +87,9 @@ public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, Trade
         return payload;
     }
 
+    /**
+     * 校验交易主表最基础的必填项和枚举值。
+     */
     private void validateBaseInfo(TradeRecord tradeRecord) {
         if (tradeRecord.getStockCode() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "股票代码不能为空");
@@ -81,6 +102,9 @@ public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, Trade
         }
     }
 
+    /**
+     * 表单字符串统一去首尾空格；空字符串按 null 处理，便于必填校验和数据库存储。
+     */
     private String trimToNull(String value) {
         if (value == null || value.isBlank()) {
             return null;

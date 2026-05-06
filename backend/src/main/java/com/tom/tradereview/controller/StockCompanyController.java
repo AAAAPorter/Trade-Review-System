@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * A 股公司搜索接口。
+ *
+ * <p>用于交易表单的股票名称自动补全，并在匹配后回填股票代码。</p>
+ */
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor

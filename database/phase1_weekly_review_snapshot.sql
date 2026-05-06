@@ -1,5 +1,7 @@
 USE trade_review_system;
 
+-- 阶段一迁移：给 weekly_review 增加统计快照字段。
+-- 这些字段用于保存生成周复盘时的统计结果，避免历史复盘跟随后续交易补录而变化。
 ALTER TABLE weekly_review
     ADD COLUMN trade_count BIGINT AFTER profit_rate,
     ADD COLUMN win_count BIGINT AFTER trade_count,

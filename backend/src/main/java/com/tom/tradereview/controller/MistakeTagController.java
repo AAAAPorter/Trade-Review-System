@@ -19,6 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * 错误标签维护接口。
+ *
+ * <p>标签本身是字典数据；交易与标签的绑定关系放在 trade_mistake_rel 表中。</p>
+ */
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor
@@ -50,6 +55,9 @@ public class MistakeTagController {
         return mistakeTagService.getById(id);
     }
 
+    /**
+     * 删除标签前先清理交易-标签关系，避免留下孤儿关系影响统计。
+     */
     @DeleteMapping("/{id}")
     @Transactional
     public Boolean delete(@PathVariable Long id) {

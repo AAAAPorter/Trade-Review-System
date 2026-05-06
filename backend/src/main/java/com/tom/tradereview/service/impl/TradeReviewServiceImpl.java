@@ -6,6 +6,9 @@ import com.tom.tradereview.mapper.TradeReviewMapper;
 import com.tom.tradereview.service.TradeReviewService;
 import org.springframework.stereotype.Service;
 
+/**
+ * 单笔交易复盘服务实现。
+ */
 @Service
 public class TradeReviewServiceImpl extends ServiceImpl<TradeReviewMapper, TradeReview> implements TradeReviewService {
 }

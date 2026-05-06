@@ -1,4 +1,5 @@
 * {
+  /* 全局使用 border-box，组件宽度计算更直观。 */
   box-sizing: border-box;
 }
 
@@ -9,6 +10,7 @@ body,
 }
 
 body {
+  /* 页面基底色与 Ant Design 卡片白色形成层次。 */
   margin: 0;
   background: #f5f7fb;
   color: #1f2937;
@@ -28,24 +30,41 @@ body {
 }
 
 .value-positive {
+  /* 盈利数字统一强调为绿色。 */
   color: #0f9f6e;
   font-weight: 600;
 }
 
 .value-negative {
+  /* 亏损数字统一强调为红色。 */
   color: #d4380d;
   font-weight: 600;
 }
 
 .execution-row-buy > td {
+  /* 买入行用非常浅的绿色背景，帮助快速区分方向。 */
   background: #fbfffd;
 }
 
 .execution-row-sell > td {
+  /* 卖出行用非常浅的暖色背景，和买入行做视觉区隔。 */
   background: #fffdf9;
 }
 
 .execution-row-buy:hover > td,
 .execution-row-sell:hover > td {
   background: #f5f8ff !important;
+}
+
+.execution-quick-form {
+  /* 成交明细的快捷录入区，保持紧凑但和表格有清晰分隔。 */
+  margin-bottom: 14px;
+  padding: 12px 12px 0;
+  background: #f8fafc;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+}
+
+.execution-quick-form .ant-form-item {
+  margin-bottom: 12px;
 }

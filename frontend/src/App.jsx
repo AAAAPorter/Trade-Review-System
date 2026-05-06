@@ -34,6 +34,7 @@ export default function App() {
     { key: '/rule-card', icon: <ReadOutlined />, label: '纪律卡片' },
   ];
 
+  // 根据当前路由高亮侧边栏菜单；子路由如 /trades/1 仍归到“交易记录”。
   const selectedKey = menuItems.find((item) => location.pathname.startsWith(item.key))?.key || '/dashboard';
   const pageTitle = menuItems.find((item) => item.key === selectedKey)?.label || '个人交易复盘系统';
 
@@ -75,6 +76,7 @@ export default function App() {
           }}
         >
           <Routes>
+            {/* 页面路由集中声明在这里，便于从菜单入口追到具体页面组件。 */}
             <Route path="/" element={<Navigate to="/trades" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/trades" element={<TradeList />} />

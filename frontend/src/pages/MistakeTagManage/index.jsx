@@ -3,6 +3,7 @@ import { Button, Form, Input, Modal, Popconfirm, Space, Table, message } from 'a
 import { PlusOutlined } from '@ant-design/icons';
 import { createMistakeTag, deleteMistakeTag, listMistakeTags, updateMistakeTag } from '../../api/mistakeTag';
 
+// 错误标签字典管理页：负责维护交易复盘时可选择的问题标签。
 export default function MistakeTagManage() {
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -10,6 +11,7 @@ export default function MistakeTagManage() {
   const [editingId, setEditingId] = useState(null);
   const [form] = Form.useForm();
 
+  // 标签数量较少，列表直接全量读取并按后端顺序展示。
   const loadData = async () => {
     setLoading(true);
     try {
@@ -24,6 +26,7 @@ export default function MistakeTagManage() {
     loadData();
   }, []);
 
+  // 同一个弹窗同时承担新增和编辑：有 record 表示编辑，否则重置表单创建新标签。
   const handleOpenModal = (record = null) => {
     if (record) {
       setEditingId(record.id);
@@ -35,6 +38,7 @@ export default function MistakeTagManage() {
     setIsModalOpen(true);
   };
 
+  // 保存前裁剪标签名称两端空格，避免出现视觉上重复的标签。
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
@@ -57,6 +61,7 @@ export default function MistakeTagManage() {
     }
   };
 
+  // 删除标签时后端会同步清理交易-标签关系。
   const handleDelete = async (id) => {
     try {
       await deleteMistakeTag(id);
@@ -67,6 +72,7 @@ export default function MistakeTagManage() {
     }
   };
 
+  // 表格列定义。操作列使用 Popconfirm 防止误删标签。
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 80 },
     { title: '标签名称', dataIndex: 'name', width: 220 },

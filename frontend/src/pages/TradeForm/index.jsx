@@ -14,8 +14,10 @@ import { searchStocks } from '../../api/stock';
 import TradeExecutionDetails from '../../components/TradeExecutionDetails';
 import { displayValue, formatDateTime, formatNumber, formatPercent, positionStatusMeta, profitColor } from '../../utils/format';
 
+// 股票名称匹配前先做归一化，避免全角/空格/大小写影响精确匹配。
 const normalizeStockName = (value = '') => String(value).normalize('NFKC').replace(/\s+/g, '').toUpperCase();
 
+// AutoComplete 的候选项既显示股票名，也在右侧显示代码，选中时把 code 带回表单。
 const buildStockOptions = (stocks = []) =>
   stocks.slice(0, 20).map((stock) => ({
     value: stock.name,
@@ -28,12 +30,14 @@ const buildStockOptions = (stocks = []) =>
     ),
   }));
 
+// 判断用户输入是否与候选股票完全一致，匹配后用于自动回填股票代码。
 const findExactStock = (stocks = [], value) => {
   const stockName = normalizeStockName(value);
   if (!stockName) return null;
   return stocks.find((stock) => normalizeStockName(stock.name) === stockName) || null;
 };
 
+// 新增交易时，草稿明细只提交后端需要的字段，去掉 draftId 等前端临时字段。
 const toExecutionPayload = (detail) => ({
   actionType: detail.actionType,
   executionTime: detail.executionTime,
@@ -44,22 +48,26 @@ const toExecutionPayload = (detail) => ({
   remark: detail.remark,
 });
 
+// 系统汇总中的持仓状态展示。
 const positionStatusTag = (value) => {
   const meta = positionStatusMeta(value);
   if (meta.text === '-') return '-';
   return <Tag color={meta.color}>{meta.text}</Tag>;
 };
 
+// 金额按盈亏方向着色。
 const profitValue = (value, digits = 2) => {
   if (value === null || value === undefined || value === '') return '-';
   return <span style={{ color: profitColor(value), fontWeight: profitColor(value) ? 600 : undefined }}>{formatNumber(value, digits)}</span>;
 };
 
+// 比例按盈亏方向着色。
 const profitPercent = (value) => {
   if (value === null || value === undefined || value === '') return '-';
   return <span style={{ color: profitColor(value), fontWeight: profitColor(value) ? 600 : undefined }}>{formatPercent(value, 2)}</span>;
 };
 
+// 编辑页的“系统汇总”来自后端反算字段；新增页保存前大多为空。
 const summaryItems = (trade) => [
   { label: '首次买入时间', children: formatDateTime(trade.buyTime) },
   { label: '最后卖出时间', children: formatDateTime(trade.sellTime) },
@@ -74,6 +82,7 @@ const summaryItems = (trade) => [
   { label: '盈亏比例', children: profitPercent(trade.profitRate) },
 ];
 
+// 交易新增/编辑页。新增模式支持先录入成交明细草稿，保存后一起落库。
 export default function TradeForm() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -89,6 +98,7 @@ export default function TradeForm() {
   const [saving, setSaving] = useState(false);
   const stockSearchSeqRef = useRef(0);
 
+  // 编辑模式下读取交易基础信息和已选错误标签，并回填表单。
   const loadTrade = async () => {
     if (!isEdit) return;
     setLoading(true);
@@ -109,6 +119,7 @@ export default function TradeForm() {
   };
 
   useEffect(() => {
+    // 页面初始化先加载标签字典；编辑模式随后加载交易详情。
     const loadInitialData = async () => {
       setLoading(true);
       try {
@@ -127,6 +138,7 @@ export default function TradeForm() {
   }, [id]);
 
   useEffect(() => {
+    // 股票搜索做 250ms 防抖，减少连续输入时的请求数量。
     if (!String(stockKeyword || '').trim()) return undefined;
 
     const timer = window.setTimeout(() => {
@@ -136,6 +148,7 @@ export default function TradeForm() {
     return () => window.clearTimeout(timer);
   }, [stockKeyword]);
 
+  // 只把基础信息字段提交给交易主表，汇总字段由后端根据成交明细维护。
   const buildTradePayload = (values) => ({
     stockCode: values.stockCode,
     stockName: values.stockName,
@@ -144,6 +157,7 @@ export default function TradeForm() {
     keyLevel: values.keyLevel,
   });
 
+  // 尝试根据股票名称精确匹配候选项；匹配成功后自动填充股票代码。
   const applyStockMatch = (value, stocks = stockMatches, { fillOfficialName = false } = {}) => {
     const stock = findExactStock(stocks, value);
     if (stock) {
@@ -158,6 +172,7 @@ export default function TradeForm() {
     return false;
   };
 
+  // 加载股票候选项时使用递增序号，防止慢请求覆盖新输入的结果。
   const loadStockOptions = async (keyword, { fillOfficialName = false } = {}) => {
     const text = String(keyword || '').trim();
     const requestSeq = stockSearchSeqRef.current + 1;
@@ -184,6 +199,7 @@ export default function TradeForm() {
     }
   };
 
+  // 输入变化时先用已有候选尝试回填代码，再等待防抖搜索刷新候选。
   const handleStockNameChange = (value) => {
     setStockKeyword(value);
     if (!String(value || '').trim()) {
@@ -195,11 +211,13 @@ export default function TradeForm() {
     applyStockMatch(value);
   };
 
+  // 从下拉框选中股票时，名称和代码同时写入表单。
   const handleStockSelect = (value, option) => {
     form.setFieldsValue({ stockName: value, stockCode: option.code });
     setStockOptions([]);
   };
 
+  // 失焦时再做一次精确匹配，尽量把手动输入的股票名称纠正为官方名称。
   const handleStockNameBlur = () => {
     const value = form.getFieldValue('stockName');
     const matched = applyStockMatch(value, stockMatches, { fillOfficialName: true });
@@ -208,6 +226,7 @@ export default function TradeForm() {
     }
   };
 
+  // 保存分两条路径：编辑时更新基础信息和标签；新增时连同成交明细草稿一次性创建。
   const handleSave = async () => {
     setSaving(true);
     try {

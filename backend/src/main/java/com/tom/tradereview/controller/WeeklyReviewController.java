@@ -1,6 +1,5 @@
 package com.tom.tradereview.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tom.tradereview.entity.WeeklyReview;
 import com.tom.tradereview.service.WeeklyReviewService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,7 @@ public class WeeklyReviewController {
 
     @GetMapping
     public List<WeeklyReview> list() {
-        return weeklyReviewService.list(new LambdaQueryWrapper<WeeklyReview>().orderByDesc(WeeklyReview::getWeekStart));
+        return weeklyReviewService.listOrderByWeekStartDesc();
     }
 
     @GetMapping("/{id}")

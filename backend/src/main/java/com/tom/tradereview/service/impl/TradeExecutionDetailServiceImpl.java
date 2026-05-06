@@ -1,8 +1,5 @@
 package com.tom.tradereview.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tom.tradereview.entity.TradeExecutionDetail;
 import com.tom.tradereview.entity.TradeRecord;
 import com.tom.tradereview.mapper.TradeExecutionDetailMapper;
@@ -29,14 +26,18 @@ import java.util.Objects;
  */
 @Service
 @RequiredArgsConstructor
-public class TradeExecutionDetailServiceImpl
-        extends ServiceImpl<TradeExecutionDetailMapper, TradeExecutionDetail>
-        implements TradeExecutionDetailService {
+public class TradeExecutionDetailServiceImpl implements TradeExecutionDetailService {
 
     private static final String BUY = "BUY";
     private static final String SELL = "SELL";
 
+    private final TradeExecutionDetailMapper tradeExecutionDetailMapper;
     private final TradeRecordService tradeRecordService;
+
+    @Override
+    public List<TradeExecutionDetail> listByTradeIdOrderByExecutionTime(Long tradeId) {
+        return tradeExecutionDetailMapper.selectByTradeIdOrderByExecutionTime(tradeId);
+    }
 
     /**
      * 新增单条成交明细：先校验交易存在，再校验明细合法性和卖出数量约束。
@@ -50,7 +51,7 @@ public class TradeExecutionDetailServiceImpl
         List<TradeExecutionDetail> details = detailsForTrade(tradeId);
         details.add(detail);
         validateSellQuantity(details);
-        save(detail);
+        tradeExecutionDetailMapper.insert(detail);
         recalculateTradeSummary(tradeId);
         return detail;
     }
@@ -73,7 +74,7 @@ public class TradeExecutionDetailServiceImpl
         List<TradeExecutionDetail> combinedDetails = new ArrayList<>(detailsForTrade(tradeId));
         combinedDetails.addAll(details);
         validateSellQuantity(combinedDetails);
-        saveBatch(details);
+        tradeExecutionDetailMapper.insertBatch(details);
         recalculateTradeSummary(tradeId);
     }
 
@@ -94,9 +95,9 @@ public class TradeExecutionDetailServiceImpl
         details.add(detail);
         validateSellQuantity(details);
 
-        updateById(detail);
+        tradeExecutionDetailMapper.updateById(detail);
         recalculateTradeSummary(oldDetail.getTradeId());
-        return getById(id);
+        return tradeExecutionDetailMapper.selectById(id);
     }
 
     /**
@@ -106,7 +107,7 @@ public class TradeExecutionDetailServiceImpl
     @Transactional
     public boolean deleteDetail(Long id) {
         TradeExecutionDetail detail = getRequiredDetail(id);
-        boolean removed = removeById(id);
+        boolean removed = tradeExecutionDetailMapper.deleteById(id) > 0;
         recalculateTradeSummary(detail.getTradeId());
         return removed;
     }
@@ -124,21 +125,9 @@ public class TradeExecutionDetailServiceImpl
         int remainingQuantity = totalBuyQuantity - totalSellQuantity;
 
         if (details.isEmpty()) {
-            tradeRecordService.update(new LambdaUpdateWrapper<TradeRecord>()
-                    .eq(TradeRecord::getId, tradeId)
-                    .set(TradeRecord::getBuyTime, null)
-                    .set(TradeRecord::getBuyPrice, null)
-                    .set(TradeRecord::getSellTime, null)
-                    .set(TradeRecord::getSellPrice, null)
-                    .set(TradeRecord::getTradeDate, null)
-                    .set(TradeRecord::getTotalBuyQuantity, null)
-                    .set(TradeRecord::getTotalSellQuantity, null)
-                    .set(TradeRecord::getRemainingQuantity, null)
-                    .set(TradeRecord::getAvgBuyPrice, null)
-                    .set(TradeRecord::getAvgSellPrice, null)
-                    .set(TradeRecord::getPositionStatus, null)
-                    .set(TradeRecord::getProfitAmount, null)
-                    .set(TradeRecord::getProfitRate, null));
+            TradeRecord summary = new TradeRecord();
+            summary.setId(tradeId);
+            tradeRecordService.updateSummary(summary);
             return;
         }
 
@@ -152,21 +141,22 @@ public class TradeExecutionDetailServiceImpl
         BigDecimal profitAmount = profitAmount(positionStatus, totalBuyAmount, totalSellAmount, avgBuyPrice, totalSellQuantity);
         BigDecimal profitRate = profitRate(positionStatus, profitAmount, totalBuyAmount, avgBuyPrice, totalSellQuantity);
 
-        tradeRecordService.update(new LambdaUpdateWrapper<TradeRecord>()
-                .eq(TradeRecord::getId, tradeId)
-                .set(TradeRecord::getBuyTime, firstBuyTime)
-                .set(TradeRecord::getBuyPrice, avgBuyPrice)
-                .set(TradeRecord::getSellTime, lastSellTime)
-                .set(TradeRecord::getSellPrice, avgSellPrice)
-                .set(TradeRecord::getTradeDate, lastSellTime != null ? lastSellTime.toLocalDate() : firstBuyTime == null ? null : firstBuyTime.toLocalDate())
-                .set(TradeRecord::getTotalBuyQuantity, totalBuyQuantity)
-                .set(TradeRecord::getTotalSellQuantity, totalSellQuantity)
-                .set(TradeRecord::getRemainingQuantity, remainingQuantity)
-                .set(TradeRecord::getAvgBuyPrice, avgBuyPrice)
-                .set(TradeRecord::getAvgSellPrice, avgSellPrice)
-                .set(TradeRecord::getPositionStatus, positionStatus)
-                .set(TradeRecord::getProfitAmount, profitAmount)
-                .set(TradeRecord::getProfitRate, profitRate));
+        TradeRecord summary = new TradeRecord();
+        summary.setId(tradeId);
+        summary.setBuyTime(firstBuyTime);
+        summary.setBuyPrice(avgBuyPrice);
+        summary.setSellTime(lastSellTime);
+        summary.setSellPrice(avgSellPrice);
+        summary.setTradeDate(lastSellTime != null ? lastSellTime.toLocalDate() : firstBuyTime == null ? null : firstBuyTime.toLocalDate());
+        summary.setTotalBuyQuantity(totalBuyQuantity);
+        summary.setTotalSellQuantity(totalSellQuantity);
+        summary.setRemainingQuantity(remainingQuantity);
+        summary.setAvgBuyPrice(avgBuyPrice);
+        summary.setAvgSellPrice(avgSellPrice);
+        summary.setPositionStatus(positionStatus);
+        summary.setProfitAmount(profitAmount);
+        summary.setProfitRate(profitRate);
+        tradeRecordService.updateSummary(summary);
     }
 
     /**
@@ -327,8 +317,7 @@ public class TradeExecutionDetailServiceImpl
      * 查询某笔交易的全部成交明细。
      */
     private List<TradeExecutionDetail> detailsForTrade(Long tradeId) {
-        return list(new LambdaQueryWrapper<TradeExecutionDetail>()
-                .eq(TradeExecutionDetail::getTradeId, tradeId));
+        return tradeExecutionDetailMapper.selectByTradeId(tradeId);
     }
 
     /**
@@ -344,7 +333,7 @@ public class TradeExecutionDetailServiceImpl
      * 编辑或删除明细时使用，找不到直接返回 404。
      */
     private TradeExecutionDetail getRequiredDetail(Long id) {
-        TradeExecutionDetail detail = getById(id);
+        TradeExecutionDetail detail = tradeExecutionDetailMapper.selectById(id);
         if (detail == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "成交明细不存在");
         }

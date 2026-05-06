@@ -1,6 +1,5 @@
 package com.tom.tradereview.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tom.tradereview.dto.MistakeIdsDTO;
 import com.tom.tradereview.entity.TradeMistakeRel;
 import com.tom.tradereview.service.TradeMistakeRelService;
@@ -30,7 +29,7 @@ public class TradeMistakeController {
 
     @GetMapping("/{id}/mistakes")
     public List<Long> listMistakeIds(@PathVariable Long id) {
-        return tradeMistakeRelService.list(new LambdaQueryWrapper<TradeMistakeRel>().eq(TradeMistakeRel::getTradeId, id))
+        return tradeMistakeRelService.listByTradeId(id)
                 .stream()
                 .map(TradeMistakeRel::getMistakeTagId)
                 .toList();
@@ -42,7 +41,7 @@ public class TradeMistakeController {
     @PostMapping("/{id}/mistakes")
     @Transactional
     public Boolean replaceMistakes(@PathVariable Long id, @RequestBody MistakeIdsDTO dto) {
-        tradeMistakeRelService.remove(new LambdaQueryWrapper<TradeMistakeRel>().eq(TradeMistakeRel::getTradeId, id));
+        tradeMistakeRelService.removeByTradeId(id);
         List<Long> mistakeTagIds = dto == null ? null : dto.getMistakeTagIds();
         if (mistakeTagIds == null || mistakeTagIds.isEmpty()) {
             return true;

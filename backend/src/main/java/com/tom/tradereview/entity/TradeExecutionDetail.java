@@ -1,6 +1,5 @@
 package com.tom.tradereview.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,7 +11,6 @@ import java.time.LocalDateTime;
  * <p>一条交易记录可以包含多次买入和多次卖出；系统汇总字段全部从这些明细聚合而来。</p>
  */
 @Data
-@TableName("trade_execution_detail")
 public class TradeExecutionDetail {
     private Long id;
 

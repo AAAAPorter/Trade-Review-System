@@ -1,14 +1,20 @@
 package com.tom.tradereview.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.tom.tradereview.entity.TradeExecutionDetail;
+
+import java.util.List;
 
 /**
  * 成交明细业务接口。
  *
- * <p>除 MyBatis Plus 通用 CRUD 外，额外提供会校验数据并反算交易主表的写入方法。</p>
+ * <p>这里提供会校验数据并反算交易主表的写入方法。</p>
  */
-public interface TradeExecutionDetailService extends IService<TradeExecutionDetail> {
+public interface TradeExecutionDetailService {
+    /**
+     * 查询指定交易的成交明细，按成交时间排序。
+     */
+    List<TradeExecutionDetail> listByTradeIdOrderByExecutionTime(Long tradeId);
+
     /**
      * 为指定交易新增一条成交明细。
      */

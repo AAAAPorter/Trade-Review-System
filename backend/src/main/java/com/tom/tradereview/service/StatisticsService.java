@@ -1,6 +1,5 @@
 package com.tom.tradereview.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tom.tradereview.dto.MistakeCountDTO;
 import com.tom.tradereview.dto.WeeklyStatisticsDTO;
 import com.tom.tradereview.entity.MistakeTag;
@@ -36,9 +35,7 @@ public class StatisticsService {
      * 生成某个日期闭区间的周统计。
      */
     public WeeklyStatisticsDTO week(LocalDate start, LocalDate end) {
-        List<TradeRecord> trades = tradeRecordService.list(new LambdaQueryWrapper<TradeRecord>()
-                .ge(TradeRecord::getTradeDate, start)
-                .le(TradeRecord::getTradeDate, end));
+        List<TradeRecord> trades = tradeRecordService.listByTradeDateRange(start, end);
 
         long tradeCount = trades.size();
         long winCount = trades.stream().filter(trade -> positive(trade.getProfitAmount())).count();
@@ -76,7 +73,7 @@ public class StatisticsService {
         }
         Map<Long, String> tagNames = mistakeTagService.list().stream()
                 .collect(Collectors.toMap(MistakeTag::getId, MistakeTag::getName));
-        Map<Long, Long> counts = tradeMistakeRelService.list(new LambdaQueryWrapper<TradeMistakeRel>().in(TradeMistakeRel::getTradeId, tradeIds))
+        Map<Long, Long> counts = tradeMistakeRelService.listByTradeIds(tradeIds)
                 .stream()
                 .collect(Collectors.groupingBy(TradeMistakeRel::getMistakeTagId, Collectors.counting()));
         return counts.entrySet().stream()

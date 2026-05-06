@@ -1,6 +1,5 @@
 package com.tom.tradereview.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -14,7 +13,6 @@ import java.time.LocalDateTime;
  * 这样历史周复盘不会因为之后补录交易而自动变化。</p>
  */
 @Data
-@TableName("weekly_review")
 public class WeeklyReview {
     private Long id;
 

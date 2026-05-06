@@ -1,11 +1,6 @@
 package com.tom.tradereview.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.tom.tradereview.entity.TradeExecutionDetail;
-import com.tom.tradereview.entity.TradeMistakeRel;
 import com.tom.tradereview.entity.TradeRecord;
-import com.tom.tradereview.entity.TradeReview;
 import com.tom.tradereview.mapper.TradeExecutionDetailMapper;
 import com.tom.tradereview.mapper.TradeMistakeRelMapper;
 import com.tom.tradereview.mapper.TradeRecordMapper;
@@ -17,6 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.util.List;
+
 /**
  * 交易基础信息服务实现。
  *
@@ -25,10 +23,26 @@ import org.springframework.web.server.ResponseStatusException;
  */
 @Service
 @RequiredArgsConstructor
-public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, TradeRecord> implements TradeRecordService {
+public class TradeRecordServiceImpl implements TradeRecordService {
+    private final TradeRecordMapper tradeRecordMapper;
     private final TradeMistakeRelMapper tradeMistakeRelMapper;
     private final TradeExecutionDetailMapper tradeExecutionDetailMapper;
     private final TradeReviewMapper tradeReviewMapper;
+
+    @Override
+    public List<TradeRecord> list(LocalDate startDate, LocalDate endDate, String stockName, Integer isPatternTrade) {
+        return tradeRecordMapper.selectList(TradeRecordMapper.COLUMNS, startDate, endDate, stockName, isPatternTrade);
+    }
+
+    @Override
+    public List<TradeRecord> listByTradeDateRange(LocalDate startDate, LocalDate endDate) {
+        return list(startDate, endDate, null, null);
+    }
+
+    @Override
+    public TradeRecord getById(Long id) {
+        return tradeRecordMapper.selectById(id);
+    }
 
     /**
      * 创建交易主表记录，并做基础必填校验。
@@ -37,7 +51,7 @@ public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, Trade
     public TradeRecord createTrade(TradeRecord tradeRecord) {
         TradeRecord payload = editablePayload(tradeRecord);
         validateBaseInfo(payload);
-        save(payload);
+        tradeRecordMapper.insert(payload);
         return payload;
     }
 
@@ -46,14 +60,14 @@ public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, Trade
      */
     @Override
     public TradeRecord updateTrade(Long id, TradeRecord tradeRecord) {
-        if (id == null || getById(id) == null) {
+        if (id == null || tradeRecordMapper.selectById(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "交易记录不存在");
         }
         TradeRecord payload = editablePayload(tradeRecord);
         payload.setId(id);
         validateBaseInfo(payload);
-        updateById(payload);
-        return getById(id);
+        tradeRecordMapper.updateEditableById(payload);
+        return tradeRecordMapper.selectById(id);
     }
 
     /**
@@ -62,13 +76,18 @@ public class TradeRecordServiceImpl extends ServiceImpl<TradeRecordMapper, Trade
     @Override
     @Transactional
     public boolean deleteTrade(Long id) {
-        if (id == null || getById(id) == null) {
+        if (id == null || tradeRecordMapper.selectById(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "交易记录不存在");
         }
-        tradeExecutionDetailMapper.delete(new LambdaQueryWrapper<TradeExecutionDetail>().eq(TradeExecutionDetail::getTradeId, id));
-        tradeMistakeRelMapper.delete(new LambdaQueryWrapper<TradeMistakeRel>().eq(TradeMistakeRel::getTradeId, id));
-        tradeReviewMapper.delete(new LambdaQueryWrapper<TradeReview>().eq(TradeReview::getTradeId, id));
-        return removeById(id);
+        tradeExecutionDetailMapper.deleteByTradeId(id);
+        tradeMistakeRelMapper.deleteByTradeId(id);
+        tradeReviewMapper.deleteByTradeId(id);
+        return tradeRecordMapper.deleteById(id) > 0;
+    }
+
+    @Override
+    public boolean updateSummary(TradeRecord tradeRecord) {
+        return tradeRecordMapper.updateSummaryById(tradeRecord) > 0;
     }
 
     /**

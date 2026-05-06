@@ -11,7 +11,7 @@
 ## 技术栈
 
 - 前端：Vue 3、Vite、Element Plus、Axios、Vue Router、ECharts
-- 后端：Java 17、Spring Boot、MyBatis Plus、Maven、Lombok
+- 后端：Java 17、Spring Boot、MyBatis、Maven、Lombok
 - 数据库：MySQL 8
 
 ## 目录结构

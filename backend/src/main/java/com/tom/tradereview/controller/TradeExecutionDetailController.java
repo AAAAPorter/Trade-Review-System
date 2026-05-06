@@ -1,6 +1,5 @@
 package com.tom.tradereview.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tom.tradereview.entity.TradeExecutionDetail;
 import com.tom.tradereview.service.TradeExecutionDetailService;
 import lombok.RequiredArgsConstructor;
@@ -33,10 +32,7 @@ public class TradeExecutionDetailController {
      */
     @GetMapping("/api/trades/{tradeId}/execution-details")
     public List<TradeExecutionDetail> list(@PathVariable Long tradeId) {
-        return tradeExecutionDetailService.list(new LambdaQueryWrapper<TradeExecutionDetail>()
-                .eq(TradeExecutionDetail::getTradeId, tradeId)
-                .orderByAsc(TradeExecutionDetail::getExecutionTime)
-                .orderByAsc(TradeExecutionDetail::getId));
+        return tradeExecutionDetailService.listByTradeIdOrderByExecutionTime(tradeId);
     }
 
     /**

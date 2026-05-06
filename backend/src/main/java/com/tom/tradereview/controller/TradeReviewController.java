@@ -1,6 +1,5 @@
 package com.tom.tradereview.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tom.tradereview.entity.TradeReview;
 import com.tom.tradereview.service.TradeReviewService;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +32,7 @@ public class TradeReviewController {
 
     @GetMapping("/{tradeId}")
     public TradeReview detailByTradeId(@PathVariable Long tradeId) {
-        return tradeReviewService.getOne(new LambdaQueryWrapper<TradeReview>().eq(TradeReview::getTradeId, tradeId), false);
+        return tradeReviewService.getByTradeId(tradeId);
     }
 
     @PutMapping("/{id}")

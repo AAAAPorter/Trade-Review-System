@@ -33,7 +33,7 @@ ECharts
 ```text
 Java 17
 Spring Boot 3.3.7
-MyBatis Plus
+MyBatis
 Maven
 Lombok
 MySQL 8
@@ -455,6 +455,6 @@ password: ${MYSQL_ROOT_PASSWORD:}
 请保持现有路由、接口路径和数据库表名不变。
 请不要删除已有功能。
 请保持前端使用 Vue 3 + Element Plus。
-请保持后端使用 Spring Boot + MyBatis Plus。
+请保持后端使用 Spring Boot + MyBatis。
 请输出具体文件路径和完整代码片段。
 ```

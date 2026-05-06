@@ -1,8 +1,6 @@
 package com.tom.tradereview.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tom.tradereview.entity.MistakeTag;
-import com.tom.tradereview.entity.TradeMistakeRel;
 import com.tom.tradereview.service.MistakeTagService;
 import com.tom.tradereview.service.TradeMistakeRelService;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +32,7 @@ public class MistakeTagController {
 
     @GetMapping
     public List<MistakeTag> list() {
-        return mistakeTagService.list(new LambdaQueryWrapper<MistakeTag>().orderByAsc(MistakeTag::getId));
+        return mistakeTagService.listOrderById();
     }
 
     @GetMapping("/{id}")
@@ -61,7 +59,7 @@ public class MistakeTagController {
     @DeleteMapping("/{id}")
     @Transactional
     public Boolean delete(@PathVariable Long id) {
-        tradeMistakeRelService.remove(new LambdaQueryWrapper<TradeMistakeRel>().eq(TradeMistakeRel::getMistakeTagId, id));
+        tradeMistakeRelService.removeByMistakeTagId(id);
         return mistakeTagService.removeById(id);
     }
 }

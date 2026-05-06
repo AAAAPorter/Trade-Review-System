@@ -1,10 +1,9 @@
 package com.tom.tradereview.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tom.tradereview.entity.StockCompany;
 import com.tom.tradereview.mapper.StockCompanyMapper;
 import com.tom.tradereview.service.StockCompanyService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.text.Normalizer;
@@ -18,9 +17,12 @@ import java.util.Locale;
  * 查询前会先做 NFKC 归一化、去空格和转大写。</p>
  */
 @Service
-public class StockCompanyServiceImpl extends ServiceImpl<StockCompanyMapper, StockCompany> implements StockCompanyService {
+@RequiredArgsConstructor
+public class StockCompanyServiceImpl implements StockCompanyService {
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 50;
+
+    private final StockCompanyMapper stockCompanyMapper;
 
     /**
      * 按归一化名称、代码、原始名称三路模糊匹配，并限制返回数量，避免自动补全列表过长。
@@ -34,16 +36,7 @@ public class StockCompanyServiceImpl extends ServiceImpl<StockCompanyMapper, Sto
 
         String searchName = normalizeStockName(text);
         int queryLimit = clampLimit(limit);
-        LambdaQueryWrapper<StockCompany> query = new LambdaQueryWrapper<StockCompany>()
-                .and(wrapper -> wrapper
-                        .like(!searchName.isBlank(), StockCompany::getSearchName, searchName)
-                        .or()
-                        .like(StockCompany::getCode, text)
-                        .or()
-                        .like(StockCompany::getName, text))
-                .orderByAsc(StockCompany::getCode)
-                .last("LIMIT " + queryLimit);
-        return list(query);
+        return stockCompanyMapper.search(searchName, text, queryLimit);
     }
 
     /**

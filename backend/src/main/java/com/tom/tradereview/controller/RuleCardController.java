@@ -1,6 +1,5 @@
 package com.tom.tradereview.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tom.tradereview.entity.WeeklyReview;
 import com.tom.tradereview.service.WeeklyReviewService;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +21,10 @@ public class RuleCardController {
     private final WeeklyReviewService weeklyReviewService;
 
     /**
-     * MySQL 的 limit 1 放在 wrapper.last 中，避免多取数据再在 Java 内存里裁剪。
+     * Mapper 里直接按 week_start 倒序并 LIMIT 1，避免多取数据再在 Java 内存里裁剪。
      */
     @GetMapping
     public WeeklyReview latest() {
-        return weeklyReviewService.getOne(
-                new LambdaQueryWrapper<WeeklyReview>().orderByDesc(WeeklyReview::getWeekStart).last("limit 1"),
-                false
-        );
+        return weeklyReviewService.latest();
     }
 }

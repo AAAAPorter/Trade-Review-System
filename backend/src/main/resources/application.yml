@@ -9,12 +9,9 @@ spring:
 #    password: ${MYSQL_ROOT_PASSWORD:}
     password: Trade@2026
 
-mybatis-plus:
+mybatis:
   configuration:
     map-underscore-to-camel-case: true
-  global-config:
-    db-config:
-      id-type: auto
 
 logging:
   level:

@@ -1,6 +1,5 @@
 package com.tom.tradereview.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -14,7 +13,6 @@ import java.time.LocalDateTime;
  * 持仓状态等字段由成交明细服务根据 trade_execution_detail 自动反算。</p>
  */
 @Data
-@TableName("trade_record")
 public class TradeRecord {
     private Long id;
 

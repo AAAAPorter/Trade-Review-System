@@ -1,6 +1,5 @@
 package com.tom.tradereview.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 /**
@@ -9,7 +8,6 @@ import lombok.Data;
  * <p>标签用于给交易归因，后续周统计会统计这些标签出现频率。</p>
  */
 @Data
-@TableName("mistake_tag")
 public class MistakeTag {
     private Long id;
 

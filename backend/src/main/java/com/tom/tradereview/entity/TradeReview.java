@@ -1,6 +1,5 @@
 package com.tom.tradereview.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,7 +10,6 @@ import java.time.LocalDateTime;
  * <p>记录从“当时怎么想”到“真正问题”和“下一次规则”的完整反思链路。</p>
  */
 @Data
-@TableName("trade_review")
 public class TradeReview {
     private Long id;
 

@@ -1,6 +1,5 @@
 package com.tom.tradereview.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tom.tradereview.dto.TradeWithExecutionDetailsDTO;
 import com.tom.tradereview.entity.TradeMistakeRel;
 import com.tom.tradereview.entity.TradeRecord;
@@ -43,7 +42,7 @@ public class TradeBundleService {
      * 交易标签采用替换语义：先移除旧关系，再保存本次提交的完整标签集合。
      */
     private void replaceMistakes(Long tradeId, List<Long> mistakeTagIds) {
-        tradeMistakeRelService.remove(new LambdaQueryWrapper<TradeMistakeRel>().eq(TradeMistakeRel::getTradeId, tradeId));
+        tradeMistakeRelService.removeByTradeId(tradeId);
         if (mistakeTagIds == null || mistakeTagIds.isEmpty()) {
             return;
         }

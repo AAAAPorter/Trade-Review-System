@@ -1,16 +1,50 @@
 package com.tom.tradereview.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tom.tradereview.entity.MistakeTag;
 import com.tom.tradereview.mapper.MistakeTagMapper;
 import com.tom.tradereview.service.MistakeTagService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * 错误标签服务实现。
  *
- * <p>当前没有额外业务规则，继承 MyBatis Plus ServiceImpl 获得通用 CRUD 能力。</p>
+ * <p>当前没有额外业务规则，直接调用原生 MyBatis Mapper。</p>
  */
 @Service
-public class MistakeTagServiceImpl extends ServiceImpl<MistakeTagMapper, MistakeTag> implements MistakeTagService {
+@RequiredArgsConstructor
+public class MistakeTagServiceImpl implements MistakeTagService {
+    private final MistakeTagMapper mistakeTagMapper;
+
+    @Override
+    public List<MistakeTag> listOrderById() {
+        return mistakeTagMapper.selectAllOrderById();
+    }
+
+    @Override
+    public List<MistakeTag> list() {
+        return listOrderById();
+    }
+
+    @Override
+    public MistakeTag getById(Long id) {
+        return mistakeTagMapper.selectById(id);
+    }
+
+    @Override
+    public boolean save(MistakeTag mistakeTag) {
+        return mistakeTagMapper.insert(mistakeTag) > 0;
+    }
+
+    @Override
+    public boolean updateById(MistakeTag mistakeTag) {
+        return mistakeTagMapper.updateById(mistakeTag) > 0;
+    }
+
+    @Override
+    public boolean removeById(Long id) {
+        return mistakeTagMapper.deleteById(id) > 0;
+    }
 }

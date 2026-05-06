@@ -1,7 +1,5 @@
 package com.tom.tradereview.entity;
 
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,10 +10,8 @@ import java.time.LocalDateTime;
  * <p>前端交易表单通过 name/searchName 做自动补全，并在选中后回填 code。</p>
  */
 @Data
-@TableName("stock_company")
 public class StockCompany {
     /** 股票代码作为主键。 */
-    @TableId("code")
     private String code;
 
     /** 证券简称。 */

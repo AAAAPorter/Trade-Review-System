@@ -1,6 +1,5 @@
 package com.tom.tradereview.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tom.tradereview.dto.TradeWithExecutionDetailsDTO;
 import com.tom.tradereview.entity.TradeRecord;
 import com.tom.tradereview.service.TradeBundleService;
@@ -38,7 +37,7 @@ public class TradeRecordController {
     /**
      * 交易列表支持按统计归属日期、股票名称、模式内外过滤。
      *
-     * <p>LambdaQueryWrapper 的第一个 boolean 参数表示条件是否生效，因此空筛选项不会拼进 SQL。</p>
+     * <p>空筛选项会以 null 传给 Mapper，由 MyBatis 动态 SQL 决定是否拼接条件。</p>
      */
     @GetMapping
     public List<TradeRecord> list(
@@ -47,14 +46,7 @@ public class TradeRecordController {
             @RequestParam(required = false) String stockName,
             @RequestParam(required = false) Integer isPatternTrade
     ) {
-        LambdaQueryWrapper<TradeRecord> query = new LambdaQueryWrapper<TradeRecord>()
-                .ge(startDate != null, TradeRecord::getTradeDate, startDate)
-                .le(endDate != null, TradeRecord::getTradeDate, endDate)
-                .like(stockName != null && !stockName.isBlank(), TradeRecord::getStockName, stockName)
-                .eq(isPatternTrade != null, TradeRecord::getIsPatternTrade, isPatternTrade)
-                .orderByDesc(TradeRecord::getTradeDate)
-                .orderByDesc(TradeRecord::getId);
-        return tradeRecordService.list(query);
+        return tradeRecordService.list(startDate, endDate, stockName, isPatternTrade);
     }
 
     @GetMapping("/{id}")
